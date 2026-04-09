@@ -3,7 +3,8 @@
     <div class="exam-start-card">
       <div class="card-header">
         <h2 class="title">开始考试</h2>
-        <p class="subtitle">请确认您的信息后开始考试</p> </div>
+        <p class="subtitle">请确认您的信息后开始考试</p>
+      </div>
       
       <div class="paper-info" v-if="paperInfo">
         <h3 class="paper-name">{{ paperInfo.name }}</h3>
@@ -30,9 +31,9 @@
           />
         </el-form-item>
 
-        <el-form-item label="学号/工号" prop="userNo">
+        <el-form-item label="用户ID" prop="userId">
           <el-input 
-            v-model="form.userNo" 
+            v-model="form.userId" 
             disabled
             placeholder="自动获取中..."
             size="large"
@@ -80,20 +81,20 @@ const formRef = ref(null)
 const loading = ref(false)
 const paperInfo = ref(null)
 
-// ✨ 修改点 3：从本地缓存自动读取当前登录的用户信息
+// 1. 读取缓存用户信息
 const userInfoStr = localStorage.getItem('userInfo')
 const currentUser = userInfoStr ? JSON.parse(userInfoStr) : {}
 
-// ✨ 修改点 4：初始化表单数据，直接注入自动获取的数据
+// 2. 初始化表单数据，匹配 currentUser 中的字段名
 const form = ref({
-  userName: currentUser.nickname || currentUser.username || '未知用户', // 仅作页面展示
-  userNo: currentUser.userNo || '' // 用于传给后端的学号/工号
+  userName: currentUser.realName || currentUser.username || '未知用户', 
+  userId: currentUser.userId || currentUser.id || '' // 优先读取 userId，其次读取 id
 })
 
-// ✨ 修改点 5：表单验证规则改为校验 userNo 是否成功获取
+// 3. 表单验证规则
 const rules = {
-  userNo: [
-    { required: true, message: '未能获取到您的学号/工号，请联系管理员或重新登录', trigger: 'change' }
+  userId: [
+    { required: true, message: '未能获取到您的用户ID，请联系管理员或重新登录', trigger: 'change' }
   ]
 }
 
@@ -112,18 +113,16 @@ const getPaperInfo = async () => {
 // 开始考试
 const handleStartExam = async () => {
   try {
-    // 验证表单
     await formRef.value.validate()
     
     loading.value = true
     const paperId = route.params.paperId
     
-    // ✨ 修改点 6：调用开始考试API，传入 userNo 而不是 studentName
-    const res = await startExam(paperId, form.value.userNo)
+    // 传递参数必须严格对应 api/exam.js 中的 startExam(paperId, userId, studentName)
+    const res = await startExam(paperId, form.value.userId, form.value.userName)
     
     ElMessage.success('考试创建成功，正在跳转...')
     
-    // 跳转到考试页面
     router.push(`/exam/${res.data.id}`)
   } catch (error) {
     if (error.message) {
@@ -137,9 +136,8 @@ const handleStartExam = async () => {
 }
 
 onMounted(() => {
-  // ✨ 修改点 7：增加未登录拦截兜底
-  if (!currentUser.id) {
-    ElMessage.error('用户状态已过期或未登录，请重新登录！')
+  if (!form.value.userId) {
+    ElMessage.error('用户状态已过期或未获取到用户ID，请重新登录！')
     router.push('/login')
     return
   }
@@ -149,7 +147,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* 原有样式保持不变 */
 .exam-start-container {
   min-height: 100vh;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -253,7 +250,6 @@ onMounted(() => {
   margin-bottom: 0;
 }
 
-/* 响应式设计 */
 @media (max-width: 768px) {
   .exam-start-card {
     padding: 30px 20px;

@@ -9,7 +9,7 @@
       <div class="nav-actions">
         <el-button type="primary" @click="goToExam" icon="Document">考试入口</el-button>
         <el-button @click="goToRanking" icon="Trophy">考试排行榜</el-button>
-        <el-button @click="showAdminLogin" icon="Edit">管理员后台</el-button>
+        <!-- <el-button @click="showAdminLogin" icon="Edit">管理员后台</el-button> -->
       </div>
       <div class="right-menu" style="display: flex; align-items: center;">
   <template v-if="!isLoggedIn">
@@ -115,22 +115,8 @@
             <h3>智能刷题</h3>
             <p>AI推荐题目，个性化练习，智能分析弱项</p>
           </div>
-          <!-- 移除企业真题卡片 -->
-          <!--
-          <div class="action-card" @click="goToInterviewQuestions">
-            <el-icon class="card-icon interview-icon"><ChatDotRound /></el-icon>
-            <h3>企业真题</h3>
-            <p>各大企业真实面试题，提前了解面试重点</p>
-          </div>
-          -->
-          <!-- 移除模拟面试卡片 -->
-          <!--
-          <div class="action-card" @click="goToMockInterview">
-            <el-icon class="card-icon mock-icon"><Microphone /></el-icon>
-            <h3>模拟面试</h3>
-            <p>AI模拟面试官，语音答题，智能评分反馈</p>
-          </div>
-          -->
+        
+         
           <div class="action-card" @click="goToRanking">
             <el-icon class="card-icon ranking-icon"><Trophy /></el-icon>
             <h3>学习排行</h3>
@@ -141,11 +127,7 @@
             <h3>AI分析</h3>
             <p>智能学习报告，能力雷达图，个性化学习建议</p>
           </div>
-          <div class="action-card" @click="goToVideos">
-            <el-icon class="card-icon video-icon"><VideoPlay /></el-icon>
-            <h3>视频百科</h3>
-            <p>技术点讲解视频，分类学习，互动点赞分享</p>
-          </div>
+         
         </div>
       </div>
 
@@ -211,7 +193,7 @@
     </div>
 
     <!-- 管理员登录对话框 -->
-    <el-dialog v-model="adminLoginVisible" title="管理员登录" width="400px" :close-on-click-modal="false">
+    <!-- <el-dialog v-model="adminLoginVisible" title="管理员登录" width="400px" :close-on-click-modal="false">
       <el-form :model="adminLoginForm" :rules="adminLoginRules" ref="adminLoginFormRef" label-width="80px">
         <el-form-item label="用户名" prop="username">
           <el-input v-model="adminLoginForm.username" placeholder="请输入用户名" />
@@ -224,7 +206,7 @@
         <el-button @click="adminLoginVisible = false">取消</el-button>
         <el-button type="primary" @click="handleAdminLogin" :loading="adminLoginLoading">登录</el-button>
       </template>
-    </el-dialog>
+    </el-dialog> -->
 
     <!-- 公告详情对话框 -->
     <el-dialog v-model="noticeDetailVisible" :title="selectedNotice?.title" width="600px">

@@ -18,8 +18,8 @@
               <el-radio :label="1">教师</el-radio>
             </el-radio-group>
           </el-form-item>
-          <el-form-item label="学号/工号" prop="userNo">
-            <el-input v-model="regForm.userNo" placeholder="请输入学号或工号"></el-input>
+          <el-form-item label="学号/工号" prop="userId">
+            <el-input v-model="regForm.userId" placeholder="请输入学号或工号"></el-input>
           </el-form-item>
           <el-form-item>
             <el-button type="primary" @click="handleRegister" :loading="loading" style="width: 100%">立即注册</el-button>
@@ -47,34 +47,72 @@
     password: '',
     nickname: '',
     role: 2, // 默认学生
-    userNo: ''
+    userId: ''
   })
+  
+  // const rules = {
+  //   username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
+  //   password: [{ required: true, message: '请输入密码', trigger: 'blur' }, { min: 6, message: '密码不能少于6位', trigger: 'blur' }],
+  //   nickname: [{ required: true, message: '请输入姓名/昵称', trigger: 'blur' }],
+  //   role: [{ required: true, message: '请选择身份角色', trigger: 'change' }]
+  // }
   
   const rules = {
     username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
-    password: [{ required: true, message: '请输入密码', trigger: 'blur' }, { min: 6, message: '密码不能少于6位', trigger: 'blur' }],
+    password: [
+        { required: true, message: '请输入密码', trigger: 'blur' }, 
+        { min: 6, message: '密码不能少于6位', trigger: 'blur' }
+    ],
     nickname: [{ required: true, message: '请输入姓名/昵称', trigger: 'blur' }],
-    role: [{ required: true, message: '请选择身份角色', trigger: 'change' }]
+    role: [{ required: true, message: '请选择身份角色', trigger: 'change' }],
+    userId: [{ required: true, message: '请输入学号或工号', trigger: 'blur' }]
   }
-  
+
+  // const handleRegister = () => {
+  //   regFormRef.value.validate((valid) => {
+  //     if (valid) {
+  //       loading.value = true
+  //       register(regForm).then(res => {
+  //         loading.value = false
+  //         if (res.code === 200) {
+  //           ElMessage.success('注册成功，请登录！')
+  //           router.push('/login')
+  //         } else {
+  //           ElMessage.error(res.message || '注册失败')
+  //         }
+  //       }).catch(() => {
+  //         loading.value = false
+  //       })
+  //     }
+  //   })
+  // }
+
   const handleRegister = () => {
-    regFormRef.value.validate((valid) => {
-      if (valid) {
-        loading.value = true
-        register(regForm).then(res => {
-          loading.value = false
-          if (res.code === 200) {
-            ElMessage.success('注册成功，请登录！')
-            router.push('/login')
-          } else {
-            ElMessage.error(res.message || '注册失败')
-          }
-        }).catch(() => {
-          loading.value = false
-        })
-      }
-    })
-  }
+  regFormRef.value.validate((valid) => {
+    if (valid) {
+      loading.value = true
+      register(regForm).then(res => {
+        loading.value = false
+        // 假设后端的成功状态码是 200
+        if (res.code === 200) {
+          ElMessage.success('注册成功，请登录！')
+          router.push('/login')
+        } else {
+          // 后端返回的业务错误（如：学号重复、用户名重复等）
+          ElMessage.error(res.message || '注册失败')
+        }
+      }).catch((error) => {
+        
+        loading.value = false
+        ElMessage.error(error.message || error.msg || '网络请求异常，请检查后端是否正常启动')
+      })
+    } else {
+
+      ElMessage.warning('请检查红色提示框，完善注册信息！')
+    }
+  })
+}
+
   </script>
   
   <style scoped>

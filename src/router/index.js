@@ -81,18 +81,7 @@ const routes = [
         component: () => import('../views/NoticeManage.vue'),
         meta: { title: '公告管理' }
       },
-      {
-        path: 'video-manage',
-        name: 'VideoManage',
-        component: () => import('../views/VideoManage.vue'),
-        meta: { title: '视频管理' }
-      },
-      {
-        path: 'video-category-manage',
-        name: 'VideoCategoryManage',
-        component: () => import('../views/VideoCategoryManage.vue'),
-        meta: { title: '视频分类管理' }
-      },
+      
       {
         path: 'paper-create',
         name: 'PaperCreate',
@@ -142,89 +131,6 @@ const routes = [
     name: 'Practice',
     component: () => import('../views/Practice.vue'),
     meta: { title: '刷题练习' }
-  },
-  // 3分钟技术短视频相关路由
-  {
-    path: '/videos',
-    name: 'VideoList',
-    component: () => import('../views/VideoList.vue'),
-    meta: { title: '3分钟技术短视频' }
-  },
-  {
-    path: '/videos/:id',
-    name: 'VideoDetail',
-    component: () => import('../views/VideoDetail.vue'),
-    meta: { title: '3分钟技术短视频' }
-  },
-  // 兼容 /video/:id 旧路径，重定向到 /videos/:id
-  {
-    path: '/video/:id',
-    redirect: to => `/videos/${to.params.id}`
-  },
-  // 企业真题相关路由
-  {
-    path: '/interview-questions',
-    name: 'InterviewQuestionList',
-    component: () => import('../views/InterviewQuestionList.vue'),
-    meta: { title: '企业面试真题' }
-  },
-  {
-    path: '/interview-questions/:id',
-    name: 'InterviewQuestionDetail',
-    component: () => import('../views/InterviewQuestionDetail.vue'),
-    meta: { title: '真题详情' }
-  },
-  {
-    path: '/interview-practice/:id',
-    name: 'InterviewPractice',
-    component: () => import('../views/InterviewPractice.vue'),
-    meta: { title: '真题练习' }
-  },
-  // 模拟面试相关路由
-  {
-    path: '/mock-interview',
-    name: 'MockInterview',
-    component: () => import('../views/MockInterview.vue'),
-    meta: { title: '模拟面试' }
-  },
-  {
-    path: '/mock-interview/:id',
-    name: 'MockInterviewDetail',
-    component: () => import('../views/MockInterviewDetail.vue'),
-    meta: { title: '面试详情' }
-  },
-  {
-    path: '/interview-result/:id',
-    name: 'InterviewResult',
-    component: () => import('../views/InterviewResult.vue'),
-    meta: { title: '面试结果' }
-  },
-  // 用户贡献相关路由
-  // 已彻底删除 path:'/user-contributions' 路由配置
-  // 邀请码相关路由
-  {
-    path: '/interview-codes',
-    name: 'InterviewCodes',
-    component: () => import('../views/InterviewCodes.vue'),
-    meta: { title: '邀请码管理' }
-  },
-  {
-    path: '/interview-codes/activate',
-    name: 'ActivateCode',
-    component: () => import('../views/ActivateCode.vue'),
-    meta: { title: '激活邀请码' }
-  },
-  {
-    path: '/company-manage', // 企业管理页面路由
-    name: 'CompanyManage', // 路由名称
-    component: () => import('../views/CompanyManage.vue'), // 组件路径
-    meta: { title: '企业管理' } // 页面标题
-  },
-  {
-    path: '/pending-question-manage', // 用户上传审核页面路由
-    name: 'PendingQuestionManage', // 路由名称
-    component: () => import('../views/PendingQuestionManage.vue'), // 组件路径
-    meta: { title: '用户上传审核' } // 页面标题
   }
 ]
 
