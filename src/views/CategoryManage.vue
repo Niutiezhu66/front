@@ -112,9 +112,7 @@ const fetchCategories = async () => {
   try {
     const response = await request.get('/api/categories/tree')
     categoryTree.value = response.data
-    // 后台没有 /api/categories/enabled 接口，因此注释掉该调用
-    // await fetchAllCategories()
-    // 转而使用本地函数从树形结构生成扁平列表，以支持“父分类名称”的显示
+
     allCategories.value = flattenTree(response.data || [])
   } catch (error) {
     ElMessage.error('获取分类列表失败')
@@ -137,15 +135,6 @@ const flattenTree = (nodes) => {
   return list;
 }
 
-// 不再需要此函数
-// const fetchAllCategories = async () => {
-//   try {
-//     const response = await request.get('/api/categories/enabled')
-//     allCategories.value = response.data
-//   } catch (error) {
-//     console.error('获取所有分类失败:', error)
-//   }
-// }
 
 const getParentCategoryName = (parentId) => {
   if (!parentId) return '-'

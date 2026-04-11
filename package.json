@@ -1,7 +1,7 @@
 {
-  "name": "smart-learning-platform-web",
+  "name": "中小学生的在线测试系统",
   "version": "1.0.0",
-  "description": "智能学习平台前端",
+  "description": "中小学生的在线测试系统",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -16,7 +16,8 @@
     "html2canvas": "^1.4.1",
     "pinia": "^2.1.6",
     "vue": "^3.3.4",
-    "vue-router": "^4.2.4"
+    "vue-router": "^4.2.4",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^4.2.3",

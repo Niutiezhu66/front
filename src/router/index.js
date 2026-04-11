@@ -34,6 +34,12 @@ const routes = [
     meta: { title: '首页' }
   },
   {
+    path: '/profile',
+    name: 'Profile',
+    component: () => import('../views/Profile.vue'),
+    meta: { title: '个人中心' }
+  },
+  {
     path: '/admin',
     name: 'AdminLayout',
     component: () => import('../views/AdminLayout.vue'),
@@ -69,6 +75,20 @@ const routes = [
         component: () => import('../views/ScoreManage.vue'),
         meta: { title: '成绩管理' }
       },
+
+      {
+        path: 'user-manage',
+        name: 'UserManage',
+        component: () => import('../views/UserManage.vue'),
+        meta: { title: '用户与关系管理' } // 仅管理员可用
+      },
+      {
+        path: 'my-students',
+        name: 'MyStudents',
+        component: () => import('../views/MyStudents.vue'),
+        meta: { title: '我的学生管理' } // 教师可用
+      },
+
       {
         path: 'banner-manage',
         name: 'BannerManage',

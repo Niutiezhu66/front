@@ -1,4 +1,4 @@
-<template>
+<!-- <template>
   <div class="pending-question-manage">
     <!-- 顶部操作栏：上传真题按钮 -->
     <div class="toolbar">
@@ -295,4 +295,4 @@ export default {
 .filter-form {
   margin-bottom: 20px;
 }
-</style> 
+</style>  -->

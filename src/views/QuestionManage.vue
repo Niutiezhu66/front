@@ -177,32 +177,6 @@
       <template v-if="activeView === 'notices'">
         <NoticeManage />
       </template>
-      <!-- 视频管理视图 -->
-      <template v-if="activeView === 'videos'">
-        <VideoManage />
-      </template>
-      <!-- 视频分类管理视图 -->
-      <template v-if="activeView === 'video-categories'">
-        <VideoCategoryManage />
-      </template>
-      <!-- 企业管理视图 -->
-      <!--
-      <template v-if="activeView === 'company-manage'">
-        <CompanyManage />
-      </template>
-      -->
-      <!-- 企业真题类别管理视图 -->
-      <!--
-      <template v-if="activeView === 'company-question-category-manage'">
-        <CompanyQuestionCategoryManage />
-      </template>
-      -->
-      <!-- 企业真题管理视图 -->
-      <!--
-      <template v-if="activeView === 'interview-question-manage'">
-        <InterviewQuestionManage />
-      </template>
-      -->
     </div>
 
     <!-- 添加/编辑题目对话框 -->
@@ -477,7 +451,6 @@
       @close="resetAiGenerate"
     >
       <div class="ai-generate-container">
-        <!-- 步骤指示器 -->
         <el-steps :active="aiGenerateStep" finish-status="success" align-center>
           <el-step title="设置参数" description="配置生成要求"></el-step>
           <el-step title="AI生成中" description="请稍候..."></el-step>
@@ -486,7 +459,6 @@
         </el-steps>
 
         <div class="step-content">
-          <!-- 第一步：参数设置 -->
           <div v-if="aiGenerateStep === 0" class="params-step">
             <el-form :model="aiGenerateForm" :rules="aiGenerateRules" ref="aiFormRef" label-width="120px">
               <el-form-item label="题目主题" prop="topic">
@@ -559,7 +531,6 @@
             </div>
           </div>
 
-          <!-- 第二步：AI生成中 -->
           <div v-if="aiGenerateStep === 1" class="generating-step">
             <div class="generating-content">
               <el-icon class="loading-icon" :size="60"><Loading /></el-icon>
@@ -571,7 +542,6 @@
             </div>
           </div>
 
-          <!-- 第三步：预览生成结果 -->
           <div v-if="aiGenerateStep === 2" class="ai-preview-step">
             <div class="preview-header">
               <el-alert
@@ -584,7 +554,7 @@
               <div class="preview-tips">
                 <el-text type="info">
                   <el-icon><InfoFilled /></el-icon>
-                  您可以点击题目进行编辑修改，确认无误后批量导入
+                  点击题目进行编辑修改，确认无误后批量导入
                 </el-text>
               </div>
             </div>
@@ -648,7 +618,6 @@
             </div>
           </div>
 
-          <!-- 第四步：导入结果 -->
           <div v-if="aiGenerateStep === 3" class="ai-result-step">
             <el-result
               :icon="aiImportResult.success ? 'success' : 'warning'"
@@ -733,21 +702,14 @@ import { ref, reactive, onMounted, watch, computed, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { 
-  Document, Search, Refresh, Edit, Delete, Plus, Folder, Files, DataAnalysis,
-  Upload, Download, MagicStick, UploadFilled, Loading, InfoFilled, Picture, Bell, VideoPlay, Collection, OfficeBuilding, FolderOpened, DocumentChecked
-} from '@element-plus/icons-vue'
+  Search, Edit, Upload, Download,  UploadFilled, Loading, InfoFilled} from '@element-plus/icons-vue'
 import request from '../utils/request'
 import CategoryManage from './CategoryManage.vue'
 import PaperManage from './PaperManage.vue'
 import ScoreManage from './ScoreManage.vue'
 import BannerManage from './BannerManage.vue'
 import NoticeManage from './NoticeManage.vue'
-import VideoManage from './VideoManage.vue'
-import VideoCategoryManage from './VideoCategoryManage.vue'
-import PendingQuestionManage from './PendingQuestionManage.vue'
-import CompanyManage from './CompanyManage.vue'
-import CompanyQuestionCategoryManage from './CompanyQuestionCategoryManage.vue'
-import InterviewQuestionManage from './InterviewQuestionManage.vue'
+
 
 // 视图控制
 const activeView = ref('questions')
@@ -928,7 +890,7 @@ const fetchCategories = async () => {
   }
 }
 
-// 新增：批量导入相关方法
+// 批量导入相关方法
 const showBatchImportDialog = () => {
   batchImportDialogVisible.value = true
   batchImportStep.value = 0

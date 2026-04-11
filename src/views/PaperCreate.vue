@@ -461,13 +461,29 @@ const getDifficultyText = (difficulty) => {
 const getCategoryName = (categoryId) => {
   return categoryMap.value[categoryId] || '未知分类'
 }
+// 获取当前登录用户信息的辅助函数
+const getCurrentUserId = () => {
+  const userInfoStr = localStorage.getItem('userInfo')
+  if (userInfoStr) {
+    const userInfo = JSON.parse(userInfoStr)
+    return userInfo.id // 获取登录用户的ID
+  }
+  return null
+}
 
 // 手动提交
 const handleManualSubmit = async () => {
+  const teacherId = getCurrentUserId()
+  if (!teacherId) {
+    ElMessage.error('无法获取当前登录教师信息，请尝试重新登录！')
+    return
+  }
+
   const paperData = {
     name: manualForm.value.name,
     description: manualForm.value.description,
     duration: manualForm.value.duration,
+    teacherId: teacherId, // ✨ 新增：传递教师ID给后端
     questions: {},
   }
   selectedQuestions.value.forEach(q => {
@@ -493,6 +509,12 @@ const handleManualSubmit = async () => {
 
 // AI提交 - 更新提交逻辑
 const handleAiSubmit = async () => {
+  const teacherId = getCurrentUserId()
+  if (!teacherId) {
+    ElMessage.error('无法获取当前登录教师信息，请尝试重新登录！')
+    return
+  }
+
   // 过滤掉数量为0的配置项
   const rules = aiForm.value.configs
     .filter(config => config.count > 0)
@@ -512,6 +534,7 @@ const handleAiSubmit = async () => {
     name: aiForm.value.name,
     description: aiForm.value.description,
     duration: aiForm.value.duration,
+    teacherId: teacherId, // ✨ 新增：传递教师ID给后端
     rules: rules
   };
 
@@ -523,6 +546,67 @@ const handleAiSubmit = async () => {
     ElMessage.error('AI智能组卷失败，请检查配置或联系管理员')
   }
 }
+// // 手动提交
+// const handleManualSubmit = async () => {
+//   const paperData = {
+//     name: manualForm.value.name,
+//     description: manualForm.value.description,
+//     duration: manualForm.value.duration,
+//     questions: {},
+//   }
+//   selectedQuestions.value.forEach(q => {
+//     paperData.questions[q.id] = questionScores.value[q.id]
+//   })
+
+//   try {
+//     // 根据是否为编辑模式，调用不同接口
+//     if (isEditMode.value) {
+//       await request.put(`/api/papers/${paperId.value}`, paperData)
+//       ElMessage.success('试卷更新成功')
+//     } else {
+//       await request.post('/api/papers', paperData)
+//       ElMessage.success('试卷创建成功')
+//     }
+//     router.push('/admin/paper-manage')
+//   } catch (error) {
+//     console.log(error);
+//     console.log("---------------");
+//     ElMessage.error(isEditMode.value ? error.message : '创建失败')
+//   }
+// }
+
+// // AI提交 - 更新提交逻辑
+// const handleAiSubmit = async () => {
+//   // 过滤掉数量为0的配置项
+//   const rules = aiForm.value.configs
+//     .filter(config => config.count > 0)
+//     .map(config => ({
+//       type: config.type,
+//       categoryIds: config.categoryIds,
+//       count: config.count,
+//       score: config.score
+//     }));
+
+//   if (rules.length === 0) {
+//     ElMessage.warning('请至少配置一种题目的数量和分数');
+//     return;
+//   }
+  
+//   const paperData = {
+//     name: aiForm.value.name,
+//     description: aiForm.value.description,
+//     duration: aiForm.value.duration,
+//     rules: rules
+//   };
+
+//   try {
+//     await request.post('/api/papers/ai', paperData)
+//     ElMessage.success('AI智能组卷成功，快去试卷列表查看吧！')
+//     router.push('/admin/paper-manage')
+//   } catch (error) {
+//     ElMessage.error('AI智能组卷失败，请检查配置或联系管理员')
+//   }
+// }
 
 // 为AI组卷提供指定类型的子分类
 const getSubCategoriesForType = (type) => {

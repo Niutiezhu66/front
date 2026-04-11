@@ -1,6 +1,5 @@
 <template>
   <div class="app-container">
-    <!-- 左侧菜单 -->
     <div class="sidebar">
       <h3 class="sidebar-title">管理菜单</h3>
       <el-menu
@@ -9,7 +8,18 @@
         @select="handleMenuSelect"
         router
       >
-        <!-- 试题管理分组 -->
+        <el-submenu index="user" v-if="isAdmin || isTeacher">
+          <template #title>用户管理</template>
+          <el-menu-item index="/admin/user-manage" v-if="isAdmin">
+            <el-icon><User /></el-icon>
+            <span>用户与关系管理</span>
+          </el-menu-item>
+          <el-menu-item index="/admin/my-students" v-if="isTeacher">
+            <el-icon><Avatar /></el-icon>
+            <span>我的学生管理</span>
+          </el-menu-item>
+        </el-submenu>
+
         <el-submenu index="question">
           <template #title>试题管理</template>
           <el-menu-item index="/admin/question-manage">
@@ -21,7 +31,7 @@
             <span>类别管理</span>
           </el-menu-item>
         </el-submenu>
-        <!-- 考试管理分组 -->
+        
         <el-submenu index="exam">
           <template #title>考试管理</template>
           <el-menu-item index="/admin/paper-manage">
@@ -33,7 +43,7 @@
             <span>成绩管理</span>
           </el-menu-item>
         </el-submenu>
-        <!-- 系统管理分组 -->
+        
         <el-submenu index="system">
           <template #title>系统管理</template>
           <el-menu-item index="/admin/banner-manage">
@@ -45,22 +55,11 @@
             <span>公告管理</span>
           </el-menu-item>
         </el-submenu>
-        <!-- 视频管理分组 -->
-        <el-submenu index="video">
-          <template #title>视频管理</template>
-          <el-menu-item index="/admin/video-manage">
-            <el-icon><VideoPlay /></el-icon>
-            <span>视频管理</span>
-          </el-menu-item>
-          <el-menu-item index="/admin/video-category-manage">
-            <el-icon><Collection /></el-icon>
-            <span>视频分类</span>
-          </el-menu-item>
-        </el-submenu>
+        
+        
       </el-menu>
     </div>
 
-    <!-- 右侧内容区 -->
     <div class="main-content">
       <router-view />
     </div>
@@ -68,15 +67,29 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { 
   Document, Folder, Files, DataAnalysis, 
-  Picture, Bell, VideoPlay, Collection 
+  Picture, Bell,
+  User, Avatar 
 } from '@element-plus/icons-vue'
 
 const route = useRoute()
 const router = useRouter()
+
+
+const userRole = ref('')
+const isAdmin = computed(() => String(userRole.value) === '0' || userRole.value === 'ADMIN')
+const isTeacher = computed(() => String(userRole.value) === '1' || userRole.value === 'TEACHER')
+
+onMounted(() => {
+  const userInfoStr = localStorage.getItem('userInfo')
+  if (userInfoStr) {
+    const userInfo = JSON.parse(userInfoStr)
+    userRole.value = userInfo.role
+  }
+})
 
 const activeMenu = computed(() => {
   return route.path

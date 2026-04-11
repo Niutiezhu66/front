@@ -1,16 +1,13 @@
 <template>
   <div id="app">
-    <!-- 路由视图 -->
     <router-view />
   </div>
 </template>
 
 <script setup>
-// 这里可以添加全局的逻辑
 </script>
 
 <style>
-/* 全局样式 */
 * {
   margin: 0;
   padding: 0;

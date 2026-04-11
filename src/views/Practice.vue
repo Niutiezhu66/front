@@ -511,7 +511,7 @@ const getCollectedQuestions = async () => {
   loading.value = true
   try {
     // 获取本地存储的练习记录  // 从本地存储获取用户练习记录
-    const records = JSON.parse(localStorage.getItem('practiceRecords') || '{}')
+    const records = JSON.parse(localStorage.getItem(getStorageKey()) || '{}')
     
     // 获取所有收藏的题目ID  // 找出所有被收藏的题目ID
     const collectedQuestionIds = Object.keys(records).filter(id => records[id].isCollected)
@@ -580,7 +580,7 @@ const loadPracticeRecords = async () => {
     //   params: { questionIds: questionList.value.map(q => q.id) }
     // })
     // 暂时使用本地存储模拟
-    const records = JSON.parse(localStorage.getItem('practiceRecords') || '{}')
+    const records = JSON.parse(localStorage.getItem(getStorageKey()) || '{}')
     
     questionList.value.forEach(question => {
       const record = records[question.id]
@@ -599,7 +599,7 @@ const loadPracticeRecords = async () => {
 // 保存练习记录
 const savePracticeRecord = (question) => {
   try {
-    const records = JSON.parse(localStorage.getItem('practiceRecords') || '{}')
+    const records = JSON.parse(localStorage.getItem(getStorageKey()) || '{}')
     records[question.id] = {
       userAnswer: question.userAnswer,
       isAnswered: question.isAnswered,
@@ -607,7 +607,7 @@ const savePracticeRecord = (question) => {
       isCollected: question.isCollected,
       answeredAt: new Date().toISOString()
     }
-    localStorage.setItem('practiceRecords', JSON.stringify(records))
+    localStorage.setItem(getStorageKey(), JSON.stringify(records))
     
     // 更新统计数据
     updatePracticeStats()
@@ -626,7 +626,7 @@ const updatePracticeStats = async () => {
     const allQuestions = allQuestionsRes.data.records
     
     // 获取练习记录
-    const records = JSON.parse(localStorage.getItem('practiceRecords') || '{}')
+    const records = JSON.parse(localStorage.getItem(getStorageKey()) || '{}')
     
     // 计算总体统计
     const answered = allQuestions.filter(q => records[q.id]?.isAnswered)
@@ -782,6 +782,17 @@ const toggleAnswer = async (question) => {
     // 如果答案已显示，则直接隐藏
     question.showAnswer = false;
   }
+}
+
+// 获取当前用户专属的本地存储 Key
+const getStorageKey = () => {
+  const userInfoStr = localStorage.getItem('userInfo')
+  if (userInfoStr) {
+    const info = JSON.parse(userInfoStr)
+    const userId = info.userId || info.id
+    return `practiceRecords_${userId}`
+  }
+  return 'practiceRecords_guest'
 }
 
 // 切换收藏状态
@@ -996,7 +1007,7 @@ const resetAllPractice = async () => {
     )
     
     // 清除本地存储的练习记录
-    localStorage.removeItem('practiceRecords')
+    localStorage.removeItem(getStorageKey())
     
     // 重新加载题目列表，清除所有答题状态
     await getQuestionList()

@@ -5,7 +5,7 @@ import request from '../utils/request'
  */
 
 // 开始考试  // 启动考试功能
-export function startExam(paperId,userId, studentName) {
+export function startExam(paperId, userId, studentName) {
   return request({
     url: '/api/exams/start',  // 添加/api前缀
     method: 'post',
@@ -34,11 +34,12 @@ export function gradeExam(examRecordId) {
   })
 }
 
-// 获取我的考试记录  // 查询考试历史记录
-export function getMyExamRecords() {
+// 获取我的考试记录  // 查询个人的考试历史记录 
+export function getMyExamRecords(userId) {
   return request({
     url: '/api/exams/records',  // 添加/api前缀
-    method: 'get'
+    method: 'get',
+    params: { userId }          // 传递 userId 作为参数
   })
 }
 
@@ -48,4 +49,4 @@ export function getExamRecordById(id) {
     url: `/api/exams/${id}`,  // 添加/api前缀
     method: 'get'
   })
-} 
+}

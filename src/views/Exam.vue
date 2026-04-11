@@ -512,14 +512,6 @@ const handleKeyDown = (event) => {
     return;
   }
   
-  // 阻止Ctrl+A全选（可选，根据需要启用）
-  // if ((event.ctrlKey || event.metaKey) && event.key === 'a') {
-  //   event.preventDefault();
-  //   ElMessage.warning('考试期间禁止全选操作！');
-  //   return;
-  // }
-  
-  // 阻止F12开发者工具（可选）
   if (event.key === 'F12') {
     event.preventDefault();
     ElMessage.warning('考试期间禁止打开开发者工具！');

@@ -4,7 +4,7 @@
     <div class="navbar">
       <div class="logo">
         <img src="../assets/logo.svg" alt="logo" class="logo-img" />
-        <span class="title">智能学习平台</span>
+        <span class="title">中小学生的在线测试系统</span>
       </div>
       <div class="nav-actions">
         <el-button type="primary" @click="goToExam" icon="Document">考试入口</el-button>
@@ -261,12 +261,24 @@ const handleCommand = (command) => {
     localStorage.removeItem('userInfo')
     isLoggedIn.value = false
     ElMessage.success('已安全退出')
-    // 强制刷新页面或跳转回首页
     window.location.href = '/' 
   } else if (command === 'profile') {
-    ElMessage.info('个人中心功能开发中')
+    router.push('/profile') // ✨ 修改：真实跳转到个人中心
   }
 }
+
+// // 下拉菜单点击事件
+// const handleCommand = (command) => {
+//   if (command === 'logout') {
+//     localStorage.removeItem('userInfo')
+//     isLoggedIn.value = false
+//     ElMessage.success('已安全退出')
+//     // 强制刷新页面或跳转回首页
+//     window.location.href = '/' 
+//   } else if (command === 'profile') {
+//     ElMessage.info('个人中心功能开发中')
+//   }
+// }
 
 // 轮播图数据（示例数据）
 const bannerList = ref([])
