@@ -30,7 +30,7 @@
             <template #default="{ row }">
               <el-popconfirm 
                 title="确定要解除与该学生的绑定吗？" 
-                @confirm="handleUnbind(row.id)"
+                @confirm="handleUnbind(row.userId)"
               >
                 <template #reference>
                   <el-button type="danger" link>解除绑定</el-button>
@@ -56,7 +56,7 @@
   // 获取当前登录的教师ID
   const getTeacherId = () => {
     const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}')
-    return userInfo.id
+    return userInfo.userId
   }
   
   // 加载学生列表

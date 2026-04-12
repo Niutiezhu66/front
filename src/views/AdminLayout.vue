@@ -19,7 +19,8 @@
               <el-icon><User /></el-icon>
               <span>用户管理</span>
             </template>
-            <el-menu-item index="/admin/user-manage" v-if="isAdmin">用户与关系</el-menu-item>
+            <el-menu-item index="/admin/system-users" v-if="isAdmin">用户账号管理</el-menu-item>
+            <el-menu-item index="/admin/user-manage" v-if="isAdmin">用户关系管理</el-menu-item>
             <el-menu-item index="/admin/my-students" v-if="isTeacher">我的学生</el-menu-item>
           </el-sub-menu>
 

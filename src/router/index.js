@@ -75,12 +75,17 @@ const routes = [
         component: () => import('../views/ScoreManage.vue'),
         meta: { title: '成绩管理' }
       },
-
+      {
+        path: 'system-users', //
+        name: 'SystemUsers',
+        component: () => import('../views/SystemUserManage.vue'),
+        meta: { title: '用户账号管理' }// 仅管理员可用
+      },
       {
         path: 'user-manage',
         name: 'UserManage',
         component: () => import('../views/UserManage.vue'),
-        meta: { title: '用户与关系管理' } // 仅管理员可用
+        meta: { title: '用户关系管理' } // 仅管理员可用
       },
       {
         path: 'my-students',

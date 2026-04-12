@@ -26,11 +26,11 @@
             </div>
           </template>
           <el-form label-width="120px" class="relation-form">
-            <el-form-item label="教师系统ID">
-              <el-input v-model="relationForm.teacherId" placeholder="请输入教师在数据库中的ID" />
+            <el-form-item label="教师工号">
+              <el-input v-model="relationForm.teacherId" placeholder="请输入教师工号" />
             </el-form-item>
-            <el-form-item label="学生学号/ID">
-              <el-input v-model="relationForm.studentId" placeholder="请输入学生学号(绑定)/学生系统ID(解绑)" />
+            <el-form-item label="学生学号">
+              <el-input v-model="relationForm.studentId" placeholder="请输入学生学号" />
             </el-form-item>
             <el-form-item>
               <el-button type="primary" @click="handleAdminBind" :loading="btnLoading">强制绑定</el-button>
@@ -47,18 +47,12 @@
           <template #header>
             <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
               <span>📋 全局师生绑定关系列表</span>
-              <el-input 
-                v-model="searchKeyword" 
-                placeholder="输入教师姓名或学生姓名搜索" 
-                style="width: 250px;"
-                clearable>
+              <el-input v-model="searchKeyword" placeholder="输入教师姓名或学生姓名搜索" style="width: 250px;" clearable>
               </el-input>
             </div>
           </template>
-
           <el-table :data="filteredTableData" border style="width: 100%" v-loading="tableLoading">
-            <el-table-column prop="id" label="关系ID" width="80" align="center" />
-            
+
             <el-table-column label="所属教师" align="center">
               <template #default="scope">
                 <div style="font-weight: bold;">{{ scope.row.teacherName || '未知姓名' }}</div>
@@ -81,10 +75,7 @@
 
             <el-table-column label="操作" align="center" width="120">
               <template #default="scope">
-                <el-popconfirm 
-                  title="确定要强制解除该师生绑定吗？" 
-                  confirm-button-text="解绑"
-                  cancel-button-text="取消"
+                <el-popconfirm title="确定要强制解除该师生绑定吗？" confirm-button-text="解绑" cancel-button-text="取消"
                   @confirm="handleTableUnbind(scope.row)">
                   <template #reference>
                     <el-button type="danger" size="small">强制解绑</el-button>
@@ -222,9 +213,9 @@ const filteredTableData = computed(() => {
   const keyword = searchKeyword.value.toLowerCase()
   return tableData.value.filter(item => {
     return (item.teacherName && item.teacherName.toLowerCase().includes(keyword)) ||
-           (item.studentName && item.studentName.toLowerCase().includes(keyword)) ||
-           (item.teacherUserId && String(item.teacherUserId).includes(keyword)) ||
-           (item.studentId && String(item.studentId).includes(keyword))
+      (item.studentName && item.studentName.toLowerCase().includes(keyword)) ||
+      (item.teacherUserId && String(item.teacherUserId).includes(keyword)) ||
+      (item.studentId && String(item.studentId).includes(keyword))
   })
 })
 
@@ -389,7 +380,7 @@ const confirmImport = async () => {
     }
   } catch (error) {
     console.error('导入接口报错详情:', error)
-    
+
     importResult.success = false
     importResult.title = '导入出错'
     importResult.message = error.response?.data?.message || error.message || '网络或服务器异常'
@@ -403,66 +394,60 @@ const confirmImport = async () => {
 // === 强制绑定/解绑逻辑 ===
 const handleAdminBind = async () => {
   if (!relationForm.teacherId || !relationForm.studentId) {
-    ElMessage.warning('请填写完整的教师ID和学生学号')
+    ElMessage.warning('请填写完整的教师工号和学生学号')
     return
   }
   btnLoading.value = true
   try {
-    const res = await adminBindStudent(relationForm.teacherId, relationForm.studentId)
-    if (res.code === 200) {
-      ElMessage.success('强制绑定成功')
-      fetchRelations() // 【修改】：绑定成功后刷新表格
-    } else {
-      ElMessage.error(res.message || '绑定失败')
-    }
-  } catch (e) { } finally { btnLoading.value = false }
-}
+    const res = await request({
+      url: '/api/user/admin/bind',
+      method: 'post',
+      params: {
+        teacherId: relationForm.teacherId,
+        studentUserId: relationForm.studentId
+      }
+    })
 
-// const handleAdminUnbind = async () => {
-//   if (!relationForm.teacherId || !relationForm.studentId) {
-//     ElMessage.warning('解绑暂需填入学生系统主键ID至"学生学号"输入框中')
-//     return
-//   }
-//   btnLoading.value = true
-//   try {
-//     const res = await unbindStudentRelation(relationForm.teacherId, relationForm.studentId)
-//     if (res.code === 200) {
-//       ElMessage.success('强制解绑成功')
-//       fetchRelations() // 【修改】：解绑成功后刷新表格
-//     } else {
-//       ElMessage.error(res.message || '解绑失败')
-//     }
-//   } catch (e) { } finally { btnLoading.value = false }
-// }
+    // 因为 request.js 拦截器非 200 直接 reject，所以能走到这必定是 200 成功
+    ElMessage.success(res.message || '强制绑定成功')
+    fetchRelations() // 刷新下方表格
+    relationForm.studentId = '' // 清空学生学号输入框
+    
+  } catch (e) {
+    console.error('绑定请求异常:', e)
+    // 💡 关键修复：直接读取 e.message，它包含了 request.js 抛出的业务错误信息
+    ElMessage.error(e.message || '请求异常，请检查网络或联系管理员')
+  } finally { 
+    btnLoading.value = false 
+  }
+}
 
 const handleAdminUnbind = async () => {
   if (!relationForm.teacherId || !relationForm.studentId) {
-    ElMessage.warning('请填写完整的教师ID和学生学号')
+    ElMessage.warning('请填写完整的教师工号和学生学号')
     return
   }
   btnLoading.value = true
   try {
-    // ⚠️ 关键修复：直接使用 request，确保参数名叫 studentId
     const res = await request({
       url: '/api/user/teacher/unbind',
       method: 'post',
-      params: { 
-        teacherId: relationForm.teacherId,       // 教师的 数据库主键ID
-        studentId: relationForm.studentId // 学生的 学号
+      params: {
+        teacherId: relationForm.teacherId,
+        studentId: relationForm.studentId
       }
     })
+
+    ElMessage.success(res.message || '强制解绑成功')
+    fetchRelations() 
+    relationForm.studentId = '' 
     
-    if (res.code === 200) {
-      ElMessage.success('强制解绑成功')
-      fetchRelations() // 刷新下方表格列表
-      relationForm.studentId = '' // 清空输入框
-    } else {
-      ElMessage.error(res.message || '解绑失败')
-    }
   } catch (e) {
-    console.error(e)
-  } finally { 
-    btnLoading.value = false 
+    console.error('解绑请求异常:', e)
+    // 💡 关键修复：直接读取 e.message
+    ElMessage.error(e.message || '请求异常，请检查网络或联系管理员')
+  } finally {
+    btnLoading.value = false
   }
 }
 </script>

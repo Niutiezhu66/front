@@ -16,6 +16,23 @@ export function register(data) {
   })
 }
 
+// --- 后台用户管理 (增删改查) ---
+export const getUserPage = (params) => {
+  return request({ url: '/api/user/page', method: 'get', params })
+}
+
+export const addUser = (data) => {
+  return request({ url: '/api/user/add', method: 'post', data })
+}
+
+export const updateUser = (data) => {
+  return request({ url: '/api/user/update', method: 'put', data })
+}
+
+export const deleteUser = (id) => {
+  return request({ url: `/api/user/delete/${id}`, method: 'delete' })
+}
+
 /**
  * 获取所有师生绑定关系（管理员）
  */
