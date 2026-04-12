@@ -147,7 +147,7 @@ const handleLogout = () => {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
-/* 侧边栏 */
+
 .sidebar {
   width: 256px;
   background: #ffffff;
