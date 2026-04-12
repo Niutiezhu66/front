@@ -129,7 +129,11 @@ const handleLogin = () => {
         } else {
           ElMessage.error(res.message || '登录失败')
         }
-      }).catch(() => { loading.value = false })
+      }).catch((e) => { 
+        // 【关键修改】：捕获拦截器抛出的异常，提取后端真正的错误提示
+        loading.value = false 
+        ElMessage.error(e.message || '登录失败，请检查网络或联系管理员')
+      })
     }
   })
 }
