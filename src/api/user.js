@@ -16,6 +16,16 @@ export function register(data) {
   })
 }
 
+/**
+ * 获取所有师生绑定关系（管理员）
+ */
+export function getAllRelations() {
+  return request({
+    url: '/api/user/admin/relations',
+    method: 'get'
+  })
+}
+
 // // 老师获取自己名下的学生
 // export function getMyStudents(teacherId) {
 //   return request({
