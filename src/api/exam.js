@@ -50,3 +50,11 @@ export function getExamRecordById(id) {
     method: 'get'
   })
 }
+
+// 获取 AI 专属学情诊断报告
+export const getAIDiagnosis = (userId) => {
+  return request({
+    url: `/api/stats/diagnosis/${userId}`,
+    method: 'get'
+  })
+}

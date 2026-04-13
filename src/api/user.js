@@ -1,5 +1,6 @@
 import request from '@/utils/request'
 
+
 export function login(data) {
   return request({
     url: '/api/user/login',
@@ -137,5 +138,13 @@ export function getMyStudents(teacherId) {
     url: '/api/user/myStudents',
     method: 'get',
     params: { teacherId }
+  })
+}
+
+// 获取 AI 专属学情诊断报告
+export const getAIDiagnosis = (userId) => {
+  return request({
+    url: `/api/stats/diagnosis/${userId}`,
+    method: 'get'
   })
 }

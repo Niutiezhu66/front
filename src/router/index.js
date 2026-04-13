@@ -156,6 +156,12 @@ const routes = [
     name: 'Practice',
     component: () => import('../views/Practice.vue'),
     meta: { title: '刷题练习' }
+  },
+  {
+    path: '/analysis',
+    name: 'Analysis',
+    component: () => import('../views/Analysis.vue'),
+    meta: { title: 'AI学情诊断' }
   }
 ]
 

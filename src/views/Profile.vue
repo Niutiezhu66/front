@@ -5,9 +5,11 @@
     <el-card class="box-card">
       <template #header>
         <div class="card-header">
-          <span><el-icon>
+          <span>
+            <el-icon>
               <Document />
-            </el-icon> 我的考试记录</span>
+            </el-icon> 我的考试记录
+          </span>
         </div>
       </template>
 
@@ -34,8 +36,14 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="操作" width="150" align="center" fixed="right">
+        <el-table-column label="操作" width="220" align="center" fixed="right">
           <template #default="{ row }">
+            <el-button type="success" link @click="viewDetail(row)" :disabled="row.status === '进行中'">
+              <el-icon>
+                <View />
+              </el-icon> 查看详情
+            </el-button>
+
             <el-button type="primary" link @click="viewEvaluation(row)" :disabled="row.status !== '已批阅'">
               <el-icon>
                 <ChatDotRound />
@@ -60,12 +68,17 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { Document, ChatDotRound } from '@element-plus/icons-vue'
+// 导入 View 图标
+import { Document, ChatDotRound, View } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { getMyExamRecords } from '../api/exam'
+// 导入 useRouter 以实现页面跳转
+import { useRouter } from 'vue-router'
 
 const examRecords = ref([])
 const loading = ref(false)
+// 初始化 router
+const router = useRouter()
 
 // 评价弹窗控制
 const evaluationVisible = ref(false)
@@ -76,7 +89,7 @@ const getUserId = () => {
   const userInfoStr = localStorage.getItem('userInfo')
   if (userInfoStr) {
     const info = JSON.parse(userInfoStr)
-    return info.userId
+    return info.userId || info.id // 兼容一下你的数据结构，可能是 userId 也可能是 id
   }
   return null
 }
@@ -105,7 +118,12 @@ const loadExamRecords = async () => {
   }
 }
 
-// 查看评价
+// 查看答题详情 (跳转到你的 ExamResult.vue 页面)
+const viewDetail = (row) => {
+  router.push(`/exam-result/${row.id}`)
+}
+
+// 查看AI评价
 const viewEvaluation = (row) => {
   // 根据后端的 gradeExam 逻辑，AI总评价是被存放在了 answers 字段中
   currentEvaluation.value = row.answers
