@@ -2,27 +2,16 @@
   <div class="paper-manage-container">
     <div class="header">
       <div class="header-right">
-        <el-input 
-          v-model="searchKeyword" 
-          placeholder="按试卷名称搜索" 
-          class="search-input"
-          clearable
-          @clear="getPaperList"
-          @keyup.enter="handleSearch"
-        />
+        <el-input v-model="searchKeyword" placeholder="按试卷名称搜索" class="search-input" clearable @clear="getPaperList"
+          @keyup.enter="handleSearch" />
         <el-button type="primary" @click="handleSearch" :icon="Search">搜索</el-button>
-        <el-button 
-          type="danger" 
-          @click="handleBatchDelete" 
-          :icon="Delete"
-          :disabled="selectedPapers.length === 0"
-        >
+        <el-button type="danger" @click="handleBatchDelete" :icon="Delete" :disabled="selectedPapers.length === 0">
           批量删除 ({{ selectedPapers.length }})
         </el-button>
         <el-button type="primary" @click="goToCreatePage" :icon="Plus" class="create-btn">创建新试卷</el-button>
       </div>
     </div>
-    
+
     <div class="paper-list">
       <el-table :data="paperList" v-loading="loading" stripe @selection-change="handleSelectionChange">
         <el-table-column type="selection" width="55" />
@@ -43,7 +32,7 @@
           </template>
         </el-table-column>
         <el-table-column prop="totalScore" label="总分" width="120">
-           <template #default="{ row }">
+          <template #default="{ row }">
             {{ row.totalScore }} 分
           </template>
         </el-table-column>
@@ -52,10 +41,13 @@
             {{ row.duration }} 分钟
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="250" fixed="right">
+        <el-table-column label="操作" width="300" fixed="right">
           <template #default="{ row }">
-            <el-button v-if="row.status === 'DRAFT' || row.status === '待发布'" size="small" type="success" @click="updateStatus(row, 'PUBLISHED')" :icon="CaretRight">发布</el-button>
-            <el-button v-if="row.status === 'PUBLISHED'" size="small" type="warning" @click="updateStatus(row, 'DRAFT')" :icon="VideoPause">停止</el-button>
+            <el-button v-if="row.status === 'DRAFT' || row.status === '待发布'" size="small" type="success"
+              @click="updateStatus(row, 'PUBLISHED')" :icon="CaretRight">发布</el-button>
+            <el-button v-if="row.status === 'PUBLISHED'" size="small" type="warning" @click="updateStatus(row, 'DRAFT')"
+              :icon="VideoPause">停止</el-button>
+
             <el-button size="small" type="primary" @click="editPaper(row)" :icon="Edit">编辑</el-button>
             <el-button size="small" type="danger" @click="deletePaper(row)" :icon="Delete">删除</el-button>
           </template>
@@ -70,6 +62,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, CaretRight, Edit, Delete, VideoPause, Search } from '@element-plus/icons-vue'
+// 注意确保你的 api/paper.js 中 getPapers 方法接收 params 对象
 import { getPapers } from '../api/paper.js'
 import request from '../utils/request'
 
@@ -84,65 +77,161 @@ const getStatusText = (status) => ({ 'PUBLISHED': '已发布', 'DRAFT': '草稿'
 const getPaperList = async () => {
   loading.value = true
   try {
-    const res = await getPapers({ name: searchKeyword.value })
-    paperList.value = res.data
+    const userInfoStr = localStorage.getItem('userInfo')
+    let currentUserId = null
+    let currentRole = null 
+    
+    if (userInfoStr) {
+      const userInfo = JSON.parse(userInfoStr)
+      // 兼容获取真实的业务ID
+      currentUserId = userInfo.userId || userInfo.id
+      currentRole = String(userInfo.role) 
+      console.log("👉 准备发送给后端的身份:", { userId: currentUserId, role: currentRole })
+    }
+
+    // 🚨 核心修改：直接调用 request.get，并强制指定 params 属性
+    const res = await request.get('/api/papers/list', {
+      params: {
+        name: searchKeyword.value || undefined, 
+        userId: currentUserId,
+        role: currentRole 
+      }
+    })
+    
+    // 🚨 打印返回结果，确认数据
+    console.log("👉 接口返回数据:", res)
+    
+    if (res.code === 200) {
+      paperList.value = res.data
+    } else {
+      ElMessage.error(res.message || '获取试卷列表失败')
+    }
   } catch (error) {
-    ElMessage.error('获取试卷列表失败')
+    console.error(error)
+    ElMessage.error('获取试卷列表异常')
   } finally {
     loading.value = false
   }
 }
 
-const handleSearch = () => getPaperList()
-const goToCreatePage = () => router.push('/admin/paper-create')
-const editPaper = (paper) => router.push(`/admin/paper-create?id=${paper.id}`)
+
+
+
+const handleSearch = () => {
+  getPaperList()
+}
+
+const goToCreatePage = () => {
+  router.push('/admin/paper-create')
+}
+
+const editPaper = (paper) => {
+  router.push(`/admin/paper-create?id=${paper.id}`)
+}
 
 const updateStatus = async (paper, status) => {
   try {
-    await request.post(`/api/papers/${paper.id}/status?status=${status}`)
-    ElMessage.success(`试卷状态已更新为${getStatusText(status)}`)
-    getPaperList()
+    const res = await request.post(`/api/papers/${paper.id}/status?status=${status}`)
+    if (res.code === 200) {
+      ElMessage.success(`试卷状态已更新为 ${getStatusText(status)}`)
+      getPaperList() // 刷新列表
+    } else {
+      ElMessage.error(res.message || '更新状态失败')
+    }
   } catch (error) {
-    ElMessage.error(error.message)
+    ElMessage.error('网络异常，状态更新失败')
   }
 }
 
 const deletePaper = async (paper) => {
   try {
-    await ElMessageBox.confirm(`确定要删除试卷"${paper.name}"吗？`, '确认删除', { confirmButtonText: '确认删除', cancelButtonText: '取消', type: 'danger' })
-    await request.delete(`/api/papers/${paper.id}`)
-    ElMessage.success('试卷删除成功')
-    await getPaperList()
+    await ElMessageBox.confirm(`确定要删除试卷 "${paper.name}" 吗？（注意：如果有学生考过这张试卷，可能无法删除）`, '确认删除', {
+      confirmButtonText: '确认删除',
+      cancelButtonText: '取消',
+      type: 'danger'
+    })
+
+    const res = await request.delete(`/api/papers/${paper.id}`)
+    if (res.code === 200) {
+      ElMessage.success('试卷删除成功')
+      getPaperList() // 刷新列表
+    } else {
+      ElMessage.error(res.message || '删除失败')
+    }
   } catch (error) {
-    if (error !== 'cancel') ElMessage.error(error.message)
+    if (error !== 'cancel') {
+      ElMessage.error('删除过程发生异常')
+    }
   }
 }
 
 const handleBatchDelete = async () => {
   if (selectedPapers.value.length === 0) return ElMessage.warning('请先选择要删除的试卷')
   try {
-    await ElMessageBox.confirm(`确定要删除选中的 ${selectedPapers.value.length} 份试卷吗？`, '确认批量删除', { confirmButtonText: '确认删除', cancelButtonText: '取消', type: 'danger' })
+    await ElMessageBox.confirm(`确定要删除选中的 ${selectedPapers.value.length} 份试卷吗？`, '确认批量删除', {
+      confirmButtonText: '确认删除',
+      cancelButtonText: '取消',
+      type: 'danger'
+    })
+
+    // 批量发送删除请求
     const deletePromises = selectedPapers.value.map(p => request.delete(`/api/papers/${p.id}`))
     await Promise.all(deletePromises)
+
     ElMessage.success(`成功删除 ${selectedPapers.value.length} 份试卷`)
-    selectedPapers.value = []
-    await getPaperList()
+    selectedPapers.value = [] // 清空选中记录
+    getPaperList() // 刷新列表
   } catch (error) {
-    if (error !== 'cancel') ElMessage.error('批量删除失败')
+    if (error !== 'cancel') {
+      ElMessage.error('批量删除过程中发生异常')
+    }
   }
 }
 
-const handleSelectionChange = (selected) => { selectedPapers.value = selected }
+const handleSelectionChange = (selected) => {
+  selectedPapers.value = selected
+}
 
-onMounted(() => getPaperList())
+onMounted(() => {
+  getPaperList()
+})
 
 </script>
 
 <style scoped>
-.paper-manage-container { padding: 20px; }
-.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-.header h2 { margin: 0; color: #333; }
-.paper-list { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-.search-input { width: 240px; margin-right: 10px; }
-.create-btn { margin-left: 10px; }
+.paper-manage-container {
+  padding: 20px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.header h2 {
+  margin: 0;
+  color: #333;
+}
+
+.paper-list {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.search-input {
+  width: 240px;
+  margin-right: 10px;
+}
+
+.create-btn {
+  margin-left: 10px;
+}
 </style>

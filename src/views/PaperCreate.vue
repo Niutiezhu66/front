@@ -466,7 +466,7 @@ const getCurrentUserId = () => {
   const userInfoStr = localStorage.getItem('userInfo')
   if (userInfoStr) {
     const userInfo = JSON.parse(userInfoStr)
-    return userInfo.id // 获取登录用户的ID
+    return userInfo.userId // 获取登录用户的ID
   }
   return null
 }

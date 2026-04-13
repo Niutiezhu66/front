@@ -31,10 +31,10 @@ export function getPaperById(id) {
 }
 
 // 获取所有试卷列表
-export function getPapers(params) {
+export const getPapers = (queryParams) => {
   return request({
     url: '/api/papers/list',
     method: 'get',
-    params
+    params: queryParams // 
   })
 }
