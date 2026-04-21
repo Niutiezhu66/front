@@ -1,12 +1,20 @@
 <template>
   <div class="layout-container">
-    <aside class="sidebar">
+    <div class="ambient-background">
+      <div class="blob blob-1"></div>
+      <div class="blob blob-2"></div>
+      <div class="blob blob-3"></div>
+    </div>
+
+    <aside class="sidebar glass-sidebar">
       <div class="brand-header" @click="goAdminWelcome">
-        <img class="logo" src="https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png" alt="logo" />
+        <div class="logo-box">
+          <img class="logo" src="../assets/logo.svg" alt="logo" />
+        </div>
         <span class="brand-name">管理控制台</span>
       </div>
       
-      <el-scrollbar>
+      <el-scrollbar class="custom-scrollbar">
         <el-menu
           :default-active="activeMenu"
           class="custom-menu"
@@ -40,6 +48,10 @@
             </template>
             <el-menu-item index="/admin/paper-manage">试卷组建</el-menu-item>
             <el-menu-item index="/admin/score-manage">成绩统计</el-menu-item>
+            <el-menu-item index="/admin/teacher-analysis">
+              <el-icon><DataBoard /></el-icon>
+              <span>教学分析与改进</span>
+            </el-menu-item>
           </el-sub-menu>
           
           <el-sub-menu index="system" v-if="userRole == 0">
@@ -55,16 +67,16 @@
     </aside>
 
     <div class="main-wrapper">
-      <header class="top-header">
+      <header class="top-header glass-header">
         <div class="header-left">
           <span class="greeting">Hi, {{ userName || '管理员' }} <span class="wave">👋</span></span>
         </div>
         
         <div class="header-tools">
-          <el-tooltip content="访问前台系统" placement="bottom" :show-after="300">
-            <el-button text class="tool-btn" @click="goHome">
+          <el-tooltip content="访问前台门户" placement="bottom" :show-after="300">
+            <el-button text class="tool-btn btn-hover-glow" @click="goHome">
               <el-icon :size="18"><Monitor /></el-icon>
-              <span class="btn-text">前台门户</span>
+              <span class="btn-text">前台系统</span>
             </el-button>
           </el-tooltip>
           
@@ -72,8 +84,8 @@
           
           <el-tooltip content="安全退出" placement="bottom" :show-after="300">
             <el-button text class="tool-btn logout-btn" @click="handleLogout">
-              <el-icon :size十八="18"><SwitchButton /></el-icon>
-              <span class="btn-text">退出</span>
+              <el-icon :size="18"><SwitchButton /></el-icon>
+              <span class="btn-text">安全退出</span>
             </el-button>
           </el-tooltip>
         </div>
@@ -98,7 +110,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { 
   Document, Files, User, Setting, 
-  Monitor, SwitchButton
+  Monitor, SwitchButton, DataBoard
 } from '@element-plus/icons-vue'
 
 const route = useRoute()
@@ -125,208 +137,155 @@ const goAdminWelcome = () => router.push('/admin/welcome')
 const handleMenuSelect = (index) => router.push(index)
 
 const handleLogout = () => {
-  ElMessageBox.confirm('确定要退出系统吗？', '提示', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
+  ElMessageBox.confirm('确定要退出系统并注销登录状态吗？', '安全退出', {
+    confirmButtonText: '确定退出',
+    cancelButtonText: '继续留在此页',
     type: 'warning',
-    customClass: 'logout-confirm-dialog'
+    customClass: 'premium-dialog glass-dialog'
   }).then(() => {
     localStorage.removeItem('userInfo')
     localStorage.removeItem('token')
-    ElMessage.success('已退出登录')
+    ElMessage.success('已安全退出登录')
     router.replace('/login')
   }).catch(() => {})
 }
 </script>
 
 <style scoped>
+/* 1. 基础布局 & 环境光效 */
 .layout-container {
   display: flex;
   height: 100vh;
-  background-color: #f5f7f9;
+  background-color: #f8fafc;
+  position: relative;
   overflow: hidden;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
+.ambient-background { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+.blob { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.4; animation: float 25s infinite alternate ease-in-out; }
+.blob-1 { top: -10%; left: -5%; width: 40vw; height: 40vw; background: radial-gradient(circle, rgba(59,130,246,0.25), transparent 70%); }
+.blob-2 { bottom: -10%; right: -10%; width: 50vw; height: 50vw; background: radial-gradient(circle, rgba(139,92,246,0.15), transparent 70%); animation-delay: -5s; }
+.blob-3 { top: 40%; left: 40%; width: 30vw; height: 30vw; background: radial-gradient(circle, rgba(16,185,129,0.1), transparent 70%); animation-delay: -10s; }
+@keyframes float { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(4%, 8%) scale(1.05); } }
 
+/* 2. 侧边栏：毛玻璃态 */
 .sidebar {
-  width: 256px;
-  background: #ffffff;
+  width: 260px;
   display: flex;
   flex-direction: column;
-  box-shadow: 2px 0 8px 0 rgba(29, 35, 41, 0.05);
   z-index: 20;
-  transition: width 0.3s;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.glass-sidebar {
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-right: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 4px 0 24px rgba(15, 23, 42, 0.02);
 }
 
 .brand-header {
-  height: 64px;
+  height: 72px;
   display: flex;
   align-items: center;
   padding: 0 24px;
   cursor: pointer;
-  border-bottom: 1px solid #f0f0f0;
-  transition: background-color 0.2s;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.04);
+  transition: background-color 0.3s;
 }
+.brand-header:hover { background-color: rgba(255, 255, 255, 0.5); }
+.logo-box { padding: 4px; background: #fff; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); display: flex; align-items: center; }
+.brand-header .logo { width: 24px; height: 24px; object-fit: contain; }
+.brand-name { margin-left: 12px; font-size: 18px; font-weight: 700; color: #0f172a; letter-spacing: 0.5px; }
 
-.brand-header:hover {
-  background-color: #fafafa;
-}
-
-.brand-header .logo {
-  width: 28px;
-  height: 28px;
-  object-fit: contain;
-}
-
-.brand-name {
-  margin-left: 12px;
-  font-size: 18px;
-  font-weight: 600;
-  color: #1f2225;
-  letter-spacing: 0.5px;
-}
-
-/* 菜单定制 */
-.custom-menu {
-  border-right: none;
-  padding: 8px 0;
-}
-
+/* 3. 菜单高定美化：去除默认样式，重构光泽选态 */
+.custom-menu { border-right: none; padding: 12px 0; background: transparent; }
+:deep(.el-menu) { background: transparent; }
 :deep(.el-sub-menu__title),
 :deep(.el-menu-item) {
-  height: 50px;
-  line-height: 50px;
-  margin: 4px 12px;
-  border-radius: 8px;
-  color: #4e5969;
-}
-
-:deep(.el-menu-item.is-active) {
-  background-color: #e8f3ff;
-  color: #1677ff;
+  height: 48px;
+  line-height: 48px;
+  margin: 4px 16px;
+  border-radius: 12px;
+  color: #475569;
   font-weight: 500;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
-
-:deep(.el-menu-item.is-active::before) {
-  content: '';
-  position: absolute;
-  left: -12px;
-  top: 10px;
-  bottom: 10px;
-  width: 4px;
-  background-color: #1677ff;
-  border-radius: 0 4px 4px 0;
+:deep(.el-sub-menu__title:hover),
+:deep(.el-menu-item:hover) {
+  background: rgba(255, 255, 255, 0.9);
+  transform: translateX(4px);
+  color: #0f172a;
+  box-shadow: 0 4px 12px rgba(15,23,42,0.03);
 }
-
-/* 主体区域 */
-.main-wrapper {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
+:deep(.el-menu-item.is-active) {
+  background: linear-gradient(135deg, rgba(59,130,246,0.1) 0%, rgba(37,99,235,0.05) 100%);
+  color: #2563eb;
+  font-weight: 600;
+  box-shadow: inset 0 0 0 1px rgba(59,130,246,0.2), 0 4px 12px rgba(59,130,246,0.05);
 }
+:deep(.el-menu-item.is-active::before) { display: none; /* 抛弃旧的粗糙边框，采用高光阴影 */ }
+:deep(.el-sub-menu .el-menu) { background: transparent; }
 
-/* 顶部导航 */
+/* 4. 顶栏：悬浮毛玻璃 */
+.main-wrapper { flex: 1; display: flex; flex-direction: column; min-width: 0; position: relative; z-index: 10; }
 .top-header {
-  height: 64px;
-  background: #ffffff;
+  height: 72px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 24px;
-  box-shadow: 0 1px 4px rgba(0, 21, 41, 0.04);
+  padding: 0 32px;
   z-index: 10;
 }
-
-.greeting {
-  font-size: 15px;
-  color: #1d2129;
-  font-weight: 500;
+.glass-header {
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 4px 24px rgba(15, 23, 42, 0.02);
 }
 
-.wave {
-  display: inline-block;
-  animation: wave 2.5s infinite;
-  transform-origin: 70% 70%;
-}
+.greeting { font-size: 16px; color: #0f172a; font-weight: 600; letter-spacing: 0.5px; }
+.wave { display: inline-block; animation: wave 2.5s infinite; transform-origin: 70% 70%; }
+@keyframes wave { 0% { transform: rotate(0deg); } 10% { transform: rotate(14deg); } 20% { transform: rotate(-8deg); } 30% { transform: rotate(14deg); } 40% { transform: rotate(-4deg); } 50% { transform: rotate(10deg); } 60%, 100% { transform: rotate(0deg); } }
 
-@keyframes wave {
-  0% { transform: rotate(0deg); }
-  10% { transform: rotate(14deg); }
-  20% { transform: rotate(-8deg); }
-  30% { transform: rotate(14deg); }
-  40% { transform: rotate(-4deg); }
-  50% { transform: rotate(10deg); }
-  60%, 100% { transform: rotate(0deg); }
-}
+/* 工具按钮悬浮动效 */
+.header-tools { display: flex; align-items: center; gap: 8px; }
+.tool-btn { height: 42px; padding: 8px 16px; color: #475569; border-radius: 12px; transition: all 0.3s; }
+.tool-btn:hover { background-color: rgba(255,255,255,0.9); color: #0f172a; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(15,23,42,0.04); }
+.tool-btn .btn-text { margin-left: 6px; font-weight: 600; }
+.logout-btn:hover { background-color: rgba(254,242,242,0.8); color: #ef4444; }
 
-/* 工具栏 */
-.header-tools {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
+.divider { width: 1px; height: 16px; background-color: rgba(15,23,42,0.1); margin: 0 12px; }
 
-.tool-btn {
-  height: 40px;
-  padding: 8px 12px;
-  color: #4e5969;
-  border-radius: 6px;
-  transition: all 0.2s;
-}
-
-.tool-btn:hover {
-  background-color: #f2f3f5;
-  color: #1d2129;
-}
-
-.tool-btn .btn-text {
-  margin-left: 6px;
-  font-weight: 500;
-}
-
-.logout-btn:hover {
-  background-color: #fff1f0;
-  color: #f53f3f;
-}
-
-.divider {
-  width: 1px;
-  height: 16px;
-  background-color: #e5e6eb;
-  margin: 0 8px;
-}
-
-/* 内容区 */
-.content-body {
-  flex: 1;
-  padding: 20px 24px;
-  overflow-y: auto;
-}
-
+/* 5. 路由主体：全透明，让内页卡片大显身手 */
+.content-body { flex: 1; padding: 0; overflow-y: auto; overflow-x: hidden; }
 .page-container {
-  background: #ffffff;
-  border-radius: 8px;
-  min-height: calc(100vh - 104px);
-  padding: 24px;
-  /* 更高级的弥散阴影 */
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03), 0 0 2px rgba(0, 0, 0, 0.04);
+  background: transparent; /* 关键：去掉死板白框，让内页自己的圆角卡片发光 */
+  min-height: calc(100vh - 72px);
+  padding: 0;
+  box-shadow: none;
 }
 
-/* 页面切换动画 */
+/* 6. 超平滑路由切换动画：向上浮现 */
 .fade-transform-enter-active,
 .fade-transform-leave-active {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
-
 .fade-transform-enter-from {
   opacity: 0;
-  transform: translateX(15px);
+  transform: translateY(20px);
 }
-
 .fade-transform-leave-to {
   opacity: 0;
-  transform: translateX(-15px);
+  transform: translateY(-20px);
 }
+
+/* 对话框美化重置 */
+:deep(.glass-dialog) { background: rgba(255,255,255,0.85) !important; backdrop-filter: blur(20px) !important; border-radius: 20px !important; border: 1px solid rgba(255,255,255,0.9); box-shadow: 0 20px 40px rgba(15,23,42,0.1); }
+:deep(.glass-dialog .el-message-box__title) { font-weight: 700; color: #0f172a; }
+:deep(.glass-dialog .el-message-box__content) { font-size: 15px; color: #475569; padding: 12px 0; }
+:deep(.glass-dialog .el-button--primary) { background: linear-gradient(135deg, #ef4444, #dc2626); border: none; box-shadow: 0 4px 12px rgba(239,68,68,0.2); border-radius: 8px; }
+:deep(.glass-dialog .el-button--default) { border-radius: 8px; border-color: #cbd5e1; }
 </style>

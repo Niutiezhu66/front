@@ -245,6 +245,7 @@ const isEditMode = ref(false)
 const pageTitle = computed(() => isEditMode.value ? '编辑试卷' : '创建新试卷')
 // 存储当前试卷ID
 const paperId = ref(null)
+const editingTeacherId = ref(null)
 
 // 引用表格实例
 const questionTable = ref(null)
@@ -471,11 +472,18 @@ const getCurrentUserId = () => {
   return null
 }
 
+const resolveTeacherId = () => {
+  if (isEditMode.value) {
+    return editingTeacherId.value
+  }
+  return getCurrentUserId()
+}
+
 // 手动提交
 const handleManualSubmit = async () => {
-  const teacherId = getCurrentUserId()
+  const teacherId = resolveTeacherId()
   if (!teacherId) {
-    ElMessage.error('无法获取当前登录教师信息，请尝试重新登录！')
+    ElMessage.error(isEditMode.value ? '试卷缺少所属教师信息，暂时无法保存！' : '无法获取当前登录教师信息，请尝试重新登录！')
     return
   }
 
@@ -509,9 +517,9 @@ const handleManualSubmit = async () => {
 
 // AI提交 - 更新提交逻辑
 const handleAiSubmit = async () => {
-  const teacherId = getCurrentUserId()
+  const teacherId = resolveTeacherId()
   if (!teacherId) {
-    ElMessage.error('无法获取当前登录教师信息，请尝试重新登录！')
+    ElMessage.error(isEditMode.value ? '试卷缺少所属教师信息，暂时无法保存！' : '无法获取当前登录教师信息，请尝试重新登录！')
     return
   }
 
@@ -630,6 +638,8 @@ const loadPaperDataForEdit = async () => {
     const res = await request.get(`/api/papers/${paperId.value}`)
     const paperData = res.data
     
+    editingTeacherId.value = paperData.teacherId ?? null
+
     // 1. 回填表单信息，同时填充手动和AI两个表单
     manualForm.value.name = paperData.name
     manualForm.value.description = paperData.description
@@ -695,101 +705,310 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+/* ==========================================
+   全局基础容器与环境光动态背景
+   ========================================== */
 .paper-create-container {
-  padding: 20px;
-  max-width: 1400px; /* 限制最大宽度 */
-  margin: 0 auto; /* 居中显示 */
+  min-height: calc(100vh - 72px);
+  padding: 24px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+}
+
+/* 动态光晕背景效果 */
+.paper-create-container::before, .paper-create-container::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.4;
+  animation: float 25s infinite alternate ease-in-out;
+  pointer-events: none;
+  z-index: -1;
+}
+.paper-create-container::before {
+  top: -5%; left: -5%; width: 40vw; height: 40vw;
+  background: radial-gradient(circle, rgba(59,130,246,0.2), transparent 70%);
+}
+.paper-create-container::after {
+  bottom: -10%; right: -5%; width: 50vw; height: 50vw;
+  background: radial-gradient(circle, rgba(16,185,129,0.15), transparent 70%);
+  animation-delay: -5s;
+}
+@keyframes float {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(4%, 6%) scale(1.05); }
+}
+
+/* ==========================================
+   页头与选项卡美化
+   ========================================== */
+:deep(.el-page-header) {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 20px;
+  padding: 16px 24px;
+  box-shadow: 0 10px 40px -10px rgba(15, 23, 42, 0.05);
+  margin-bottom: 24px;
+  animation: fadeInUp 0.5s ease forwards;
+}
+:deep(.el-page-header__content) {
+  font-weight: 700;
+  color: #0f172a;
 }
 
 .creation-tabs {
-  margin-top: 20px;
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 10px 40px -10px rgba(15, 23, 42, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  animation: fadeInUp 0.6s ease forwards;
 }
 
-.form-section {
-  max-width: 600px;
-  margin-bottom: 20px;
+:deep(.el-tabs__nav-wrap::after) {
+  height: 1px;
+  background-color: rgba(15, 23, 42, 0.06);
+}
+:deep(.el-tabs__item) {
+  font-size: 16px;
+  font-weight: 600;
+  color: #64748b;
+  transition: all 0.3s;
+}
+:deep(.el-tabs__item.is-active) {
+  color: #3b82f6;
+}
+:deep(.el-tabs__active-bar) {
+  height: 3px;
+  border-radius: 3px;
+  background-color: #3b82f6;
 }
 
-.question-selection {
-  margin-top: 20px;
+/* ==========================================
+   表单与输入框高级质感
+   ========================================== */
+.form-section, .ai-form {
+  max-width: 900px;
+  margin: 0 auto 24px auto;
+  padding: 24px;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.9);
 }
 
+:deep(.el-form-item__label) {
+  font-weight: 600;
+  color: #1e293b;
+}
+
+:deep(.el-input__wrapper), 
+:deep(.el-textarea__inner), 
+:deep(.el-select .el-input__wrapper),
+:deep(.el-input-number .el-input__wrapper) {
+  background: rgba(255,255,255,0.8);
+  border: 1px solid rgba(15,23,42,0.06);
+  border-radius: 12px;
+  box-shadow: none !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 6px 16px;
+}
+:deep(.el-textarea__inner) {
+  border-radius: 16px;
+  padding: 12px 16px;
+}
+:deep(.el-input__wrapper:focus-within), 
+:deep(.el-textarea__inner:focus),
+:deep(.el-select .el-input__wrapper.is-focus) {
+  background: #fff;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.15) !important;
+}
+
+/* 计数器按钮圆角适配 */
+:deep(.el-input-number__increase), :deep(.el-input-number__decrease) {
+  background: rgba(241, 245, 249, 0.8);
+  border: none;
+}
+:deep(.el-input-number.is-controls-right .el-input-number__increase) {
+  border-radius: 0 12px 0 0;
+}
+:deep(.el-input-number.is-controls-right .el-input-number__decrease) {
+  border-radius: 0 0 12px 0;
+}
+
+/* ==========================================
+   操作区、筛选与区块美化
+   ========================================== */
 .filter-section {
-  margin-bottom: 20px;
-  padding: 15px;
-  background-color: #f8f9fa;
-  border-radius: 8px;
-  border: 1px solid #e9ecef;
+  margin-bottom: 24px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(16px);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.03);
+  animation: fadeInUp 0.7s ease forwards;
 }
 
+.question-selection h3 {
+  color: #0f172a;
+  font-weight: 700;
+  margin-bottom: 16px;
+  padding-left: 8px;
+  border-left: 4px solid #3b82f6;
+  border-radius: 2px;
+}
+
+/* 按钮渐变与浮空效果 */
+.el-button {
+  border-radius: 12px;
+  font-weight: 600;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.el-button--primary {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  border: none;
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.25);
+}
+.el-button--primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.35);
+}
+
+/* ==========================================
+   表格透明化与细节
+   ========================================== */
 .question-table-container {
-  margin-top: 20px;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 16px;
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.8);
 }
-
-.empty-state {
-  text-align: center;
-  padding: 40px 0;
+:deep(.el-table) {
+  background: transparent;
+  --el-table-border-color: transparent;
+  --el-table-header-bg-color: transparent;
+  --el-table-row-hover-bg-color: rgba(241, 245, 249, 0.6);
+}
+:deep(.el-table th.el-table__cell) {
+  background: transparent;
+  color: #64748b;
+  font-weight: 600;
+  font-size: 14px;
+  padding: 16px 0;
+  border-bottom: 1px solid rgba(15,23,42,0.06);
+}
+:deep(.el-table td.el-table__cell) {
+  background: transparent;
+  border-bottom: 1px dashed rgba(15,23,42,0.06);
+  padding: 16px 0;
 }
 
 .question-title {
+  color: #1e293b;
+  font-weight: 500;
   line-height: 1.5;
-  word-break: break-word;
 }
 
-.summary-section {
-  margin-top: 20px;
-  padding: 20px;
-  background-color: #f8f9fa;
+:deep(.el-tag) {
+  border: none;
+  font-weight: 600;
   border-radius: 8px;
-  border: 1px solid #e9ecef;
+  padding: 0 12px;
+}
+
+/* ==========================================
+   状态汇总与 AI 配置项区块
+   ========================================== */
+.summary-section {
+  margin-top: 24px;
+  padding: 24px;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(24px);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
+  position: sticky;
+  bottom: 20px;
+  z-index: 10;
 }
 
 .summary-item {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: center;
 }
-
 .summary-item .label {
-  font-weight: bold;
-  margin-right: 8px;
-  color: #606266;
+  font-weight: 600;
+  color: #64748b;
+  font-size: 15px;
 }
-
 .summary-item .value {
-  font-size: 18px;
-  color: #409eff;
-  font-weight: bold;
+  font-size: 24px;
+  color: #3b82f6;
+  font-weight: 800;
+  font-family: ui-monospace, monospace;
 }
 
-.ai-form {
-  max-width: 960px;
-  margin: 20px auto;
-}
-
+/* AI智能组卷独立卡片 */
 .ai-config-row {
-  margin-bottom: 18px;
-  padding: 15px;
-  border: 1px solid #dcdfe6;
-  border-radius: 8px;
-  background-color: #fafafa;
+  margin-bottom: 16px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 16px;
+  transition: all 0.3s;
 }
+.ai-config-row:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+}
+
+:deep(.el-divider__text) {
+  background-color: transparent;
+  color: #94a3b8;
+  font-weight: 600;
+}
+:deep(.el-divider) {
+  border-top-color: rgba(15,23,42,0.06);
+}
+
+/* 进场动画 */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ==========================================
+   优雅的自定义滚动条
+   ========================================== */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(15,23,42,0.1); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(15,23,42,0.2); }
 
 /* 响应式设计 */
 @media (max-width: 1200px) {
-  .paper-create-container {
-    max-width: 100%;
-    padding: 15px;
+  .paper-create-container { padding: 16px; }
+  .summary-section {
+    position: static;
+    margin-top: 24px;
   }
 }
-
 @media (max-width: 768px) {
-  .filter-section .el-row {
-    margin-bottom: 10px;
+  .filter-section .el-row, .ai-config-row .el-row { gap: 12px; }
+  .filter-section .el-col, .ai-config-row .el-col {
+    width: 100%;
+    max-width: 100%;
+    flex: none;
   }
-  
-  .filter-section .el-col {
-    margin-bottom: 10px;
-  }
+  .summary-item { justify-content: flex-start; margin-bottom: 12px; }
 }
-</style> 
+</style>

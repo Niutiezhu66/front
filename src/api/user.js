@@ -30,6 +30,14 @@ export const updateUser = (data) => {
   return request({ url: '/api/user/update', method: 'put', data })
 }
 
+export const updateProfile = (data) => {
+  return request({ url: '/api/user/profile', method: 'put', data })
+}
+
+export const changePassword = (data) => {
+  return request({ url: '/api/user/change-password', method: 'put', data })
+}
+
 export const deleteUser = (id) => {
   return request({ url: `/api/user/delete/${id}`, method: 'delete' })
 }

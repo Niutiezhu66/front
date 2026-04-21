@@ -1,6 +1,5 @@
 <template>
   <div class="exam-ranking-page">
-    <!-- 页面标题 - 重新设计 -->
     <div class="page-header">
       <div class="header-decoration">
         <div class="trophy-animation">🏆</div>
@@ -15,52 +14,28 @@
       <div class="title-underline"></div>
     </div>
 
-    <!-- 筛选条件 - 美化 -->
     <div class="filter-bar">
       <div class="filter-label">🔍 筛选条件：</div>
-      <el-select 
-        v-model="selectedPaperId" 
-        placeholder="📚 选择试卷" 
-        clearable 
-        style="width: 300px"
-        @change="loadRanking"
-        class="custom-select"
-      >
-        <el-option 
-          v-for="paper in paperList" 
-          :key="paper.id" 
-          :label="paper.name" 
-          :value="paper.id" 
-        />
+      <el-select v-model="selectedPaperId" placeholder="📚 选择试卷" clearable style="width: 300px"
+        @change="handlePaperChange" class="custom-select">
+        <el-option v-for="paper in paperList" :key="paper.id" :label="paper.name" :value="paper.id" />
       </el-select>
-      <el-select 
-        v-model="rankingLimit" 
-        placeholder="📊 显示数量" 
-        style="width: 150px"
-        @change="loadRanking"
-        class="custom-select"
-      >
+
+      <el-select v-model="rankingLimit" placeholder="📊 显示数量" style="width: 150px" @change="loadRanking"
+        class="custom-select">
         <el-option label="前10名" :value="10" />
         <el-option label="前20名" :value="20" />
         <el-option label="前50名" :value="50" />
         <el-option label="前100名" :value="100" />
       </el-select>
-      <el-button 
-        type="primary" 
-        @click="loadRanking" 
-        :loading="loading" 
-        icon="Refresh"
-        class="refresh-btn"
-      >
+
+      <el-button type="primary" @click="loadRanking" :loading="loading" icon="Refresh" class="refresh-btn">
         🔄 刷新排行榜
       </el-button>
     </div>
 
-    <!-- 主要内容区域 -->
     <div class="main-content">
-      <!-- 左侧排行榜列表 -->
       <div class="ranking-container">
-        <!-- 冠军展示区 -->
         <div v-if="rankingList.length > 0" class="champion-showcase">
           <div class="champion-crown">👑</div>
           <div class="champion-info">
@@ -73,25 +48,23 @@
         <div v-if="loading" class="loading-container">
           <el-skeleton :rows="10" animated />
         </div>
-        
+
         <div v-else-if="rankingList.length > 0" class="ranking-list">
-          <div 
-            v-for="(record, index) in rankingList" 
-            :key="record.id" 
-            class="ranking-item"
-            :class="{ 'top-three': index < 3 }"
-          >
+          <div v-for="(record, index) in rankingList" :key="record.id" class="ranking-item"
+            :class="{ 'top-three': index < 3 }">
             <div class="rank-number" :class="getRankClass(index + 1)">
               <span v-if="index === 0">🥇</span>
               <span v-else-if="index === 1">🥈</span>
               <span v-else-if="index === 2">🥉</span>
               <span v-else>{{ index + 1 }}</span>
             </div>
+
             <div class="student-info">
               <div class="student-name">{{ record.studentName }}</div>
               <div class="paper-name">📝 {{ record.paper?.name }}</div>
               <div class="exam-time">📅 {{ formatDateTime(record.endTime) }}</div>
             </div>
+
             <div class="score-info">
               <div class="score">{{ record.score }}</div>
               <div class="total-score">/ {{ record.paper?.totalScore }}</div>
@@ -101,7 +74,7 @@
             </div>
           </div>
         </div>
-        
+
         <div v-else class="empty-state">
           <div class="empty-icon">📭</div>
           <div class="empty-text">暂无排行榜数据</div>
@@ -109,7 +82,6 @@
         </div>
       </div>
 
-      <!-- 右侧统计信息 -->
       <div v-if="allRecords.length > 0" class="statistics-sidebar">
         <div class="stats-title">{{ statsTitle }}</div>
         <div class="stats-vertical">
@@ -120,6 +92,7 @@
               <div class="stat-label">参与人数</div>
             </div>
           </div>
+
           <div class="stat-card-vertical">
             <div class="stat-icon">📊</div>
             <div class="stat-info">
@@ -127,6 +100,7 @@
               <div class="stat-label">平均分</div>
             </div>
           </div>
+
           <div class="stat-card-vertical">
             <div class="stat-icon">🎯</div>
             <div class="stat-info">
@@ -134,6 +108,7 @@
               <div class="stat-label">最高分</div>
             </div>
           </div>
+
           <div class="stat-card-vertical">
             <div class="stat-icon">📉</div>
             <div class="stat-info">
@@ -145,7 +120,63 @@
       </div>
     </div>
 
-    <!-- 底部激励区域 -->
+    <div class="comment-section">
+      <div class="comment-header">
+        <div>
+          <div class="comment-title">💬 排行榜评论区</div>
+          <div class="comment-subtitle">{{ commentScopeTitle }}</div>
+        </div>
+        <div class="comment-count">共 {{ commentList.length }} 条评论</div>
+      </div>
+
+      <div class="comment-form-card">
+        <div v-if="!isLoggedIn" class="login-tip">
+          <span>登录后才可以发表评论，但所有人都能查看评论。</span>
+          <el-button type="primary" @click="goLogin">去登录</el-button>
+        </div>
+
+        <template v-else>
+          <div class="current-user">当前评论用户：{{ currentDisplayName }}</div>
+          <el-input v-model="commentContent" type="textarea" :rows="4" maxlength="500" show-word-limit resize="none"
+            placeholder="请输入你对这场考试的看法、难度评价或学习建议..." />
+          <div class="comment-form-actions">
+            <span class="comment-hint">请文明发言，最多 500 字</span>
+            <el-button type="primary" :loading="submittingComment" @click="submitComment">
+              发表评论
+            </el-button>
+          </div>
+        </template>
+      </div>
+
+      <div class="comment-list-card" v-loading="commentLoading">
+        <div v-if="commentList.length > 0" class="comment-list">
+          <div v-for="comment in commentList" :key="comment.id" class="comment-item">
+            <div class="comment-avatar">{{ getCommentAvatar(comment) }}</div>
+
+            <div class="comment-body">
+              <div class="comment-meta">
+                <span class="comment-author">{{ getCommentAuthor(comment) }}</span>
+                <span class="comment-time">{{ formatDateTime(comment.createTime) }}</span>
+              </div>
+
+              <div class="comment-content">{{ comment.content }}</div>
+
+              <div v-if="canDeleteComment(comment)" class="comment-actions">
+                <el-button type="danger" link :loading="deletingCommentId === comment.id"
+                  @click="deleteComment(comment)">
+                  删除
+                </el-button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div v-else class="comment-empty">
+          暂无评论，来发表第一条看法吧。
+        </div>
+      </div>
+    </div>
+
     <div class="motivation-section">
       <div class="motivation-text">💪 每一次挑战都是成长的机会！加油冲刺更高的排名吧！</div>
       <div class="floating-emojis">
@@ -160,19 +191,25 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { Refresh } from '@element-plus/icons-vue'
 import request from '../utils/request'
 
-// 响应式数据
+const router = useRouter()
+
 const loading = ref(false)
 const rankingList = ref([])
 const paperList = ref([])
 const selectedPaperId = ref(null)
 const rankingLimit = ref(10)
-const allRecords = ref([]) // 用于统计的所有考试记录
+const allRecords = ref([])
 
-// 计算属性 - 基于所有记录进行统计
+const commentLoading = ref(false)
+const submittingComment = ref(false)
+const deletingCommentId = ref(null)
+const commentList = ref([])
+const commentContent = ref('')
+
 const averageScore = computed(() => {
   if (allRecords.value.length === 0) return 0
   const total = allRecords.value.reduce((sum, record) => sum + Number(record.score), 0)
@@ -189,11 +226,8 @@ const minScore = computed(() => {
   return Math.min(...allRecords.value.map(record => Number(record.score)))
 })
 
-const totalParticipants = computed(() => {
-  return allRecords.value.length
-})
+const totalParticipants = computed(() => allRecords.value.length)
 
-// 动态统计标题
 const statsTitle = computed(() => {
   if (selectedPaperId.value) {
     const selectedPaper = paperList.value.find(p => p.id === selectedPaperId.value)
@@ -202,46 +236,61 @@ const statsTitle = computed(() => {
   return '📊 全部试卷统计'
 })
 
-// 获取试卷列表
+const currentUser = computed(() => {
+  const userInfoStr = localStorage.getItem('userInfo')
+  if (!userInfoStr) return null
+  try {
+    return JSON.parse(userInfoStr)
+  } catch {
+    return null
+  }
+})
+
+const isLoggedIn = computed(() => !!currentUser.value)
+
+const currentDisplayName = computed(() => {
+  if (!currentUser.value) return '未登录用户'
+  return currentUser.value.realName || currentUser.value.username || `用户${currentUser.value.id}`
+})
+
+const commentScopeTitle = computed(() => {
+  if (selectedPaperId.value) {
+    const selectedPaper = paperList.value.find(p => p.id === selectedPaperId.value)
+    return `当前试卷：${selectedPaper?.name || '选中试卷'}`
+  }
+  return '当前范围：全部试卷排行榜'
+})
+
 const getPaperList = async () => {
   try {
-    // 调用后端试卷列表API，只传递状态筛选参数
     const res = await request.get('/api/papers/list', {
-      params: {
-        status: 'PUBLISHED'  // 只获取已发布的试卷
-      }
+      params: { status: 'PUBLISHED' }
     })
-    // 修正数据解析：后端返回的数据直接在res.data中，不是res.data.records
     paperList.value = res.data || []
-    console.log('试卷列表加载成功，共', paperList.value.length, '个试卷')
   } catch (error) {
     console.error('获取试卷列表失败：', error)
     ElMessage.error('获取试卷列表失败')
   }
 }
 
-// 加载排行榜数据
 const loadRanking = async () => {
   loading.value = true
   try {
-    // 修正API调用参数，使用后端支持的paperId和limit参数
     const displayParams = {
-      paperId: selectedPaperId.value,   // 试卷ID筛选参数
-      limit: rankingLimit.value        // 显示数量限制参数
+      paperId: selectedPaperId.value,
+      limit: rankingLimit.value
     }
-    
+
     const statsParams = {
-      paperId: selectedPaperId.value,   // 试卷ID筛选参数  
-      limit: 1000                      // 统计时获取所有记录
+      paperId: selectedPaperId.value,
+      limit: 1000
     }
-    
-    // 并行调用两个API：一个用于显示，一个用于统计
+
     const [rankingRes, statsRes] = await Promise.all([
       request.get('/api/exam-records/ranking', { params: displayParams }),
       request.get('/api/exam-records/ranking', { params: statsParams })
     ])
-    
-    // 设置排行榜数据和统计数据
+
     rankingList.value = rankingRes.data || []
     allRecords.value = statsRes.data || []
   } catch (error) {
@@ -252,7 +301,104 @@ const loadRanking = async () => {
   }
 }
 
-// 获取排名样式类
+const loadComments = async () => {
+  commentLoading.value = true
+  try {
+    const res = await request.get('/api/exam-ranking-comments', {
+      params: {
+        paperId: selectedPaperId.value
+      }
+    })
+    commentList.value = res.data || []
+  } catch (error) {
+    console.error('获取评论失败：', error)
+    ElMessage.error('获取评论失败')
+  } finally {
+    commentLoading.value = false
+  }
+}
+
+const submitComment = async () => {
+  if (!isLoggedIn.value) {
+    ElMessage.warning('请先登录后再评论')
+    router.push('/login')
+    return
+  }
+
+  const content = commentContent.value.trim()
+  if (!content) {
+    ElMessage.warning('评论内容不能为空')
+    return
+  }
+
+  if (content.length > 500) {
+    ElMessage.warning('评论内容不能超过500字')
+    return
+  }
+
+  submittingComment.value = true
+  try {
+    await request.post('/api/exam-ranking-comments', {
+      paperId: selectedPaperId.value,
+      userId: currentUser.value.userId,
+      content
+    })
+    ElMessage.success('评论发表成功')
+    commentContent.value = ''
+    await loadComments()
+  } catch (error) {
+    console.error('发表评论失败：', error)
+    ElMessage.error(error.message || '发表评论失败')
+  } finally {
+    submittingComment.value = false
+  }
+}
+
+const deleteComment = async (comment) => {
+  if (!currentUser.value) {
+    ElMessage.warning('请先登录')
+    router.push('/login')
+    return
+  }
+
+  deletingCommentId.value = comment.id
+  try {
+    await request.delete(`/api/exam-ranking-comments/${comment.id}`, {
+      params: {
+        userId: currentUser.value.userId
+      }
+    })
+    ElMessage.success('删除成功')
+    await loadComments()
+  } catch (error) {
+    console.error('删除评论失败：', error)
+    ElMessage.error(error.message || '删除评论失败')
+  } finally {
+    deletingCommentId.value = null
+  }
+}
+
+const handlePaperChange = async () => {
+  await Promise.all([loadRanking(), loadComments()])
+}
+
+const goLogin = () => {
+  router.push('/login')
+}
+
+const getCommentAuthor = (comment) => {
+  return comment.userRealName || comment.username || '匿名用户'
+}
+
+const getCommentAvatar = (comment) => {
+  const name = getCommentAuthor(comment)
+  return name ? name.slice(0, 1).toUpperCase() : '匿'
+}
+
+const canDeleteComment = (comment) => {
+  return !!currentUser.value && Number(currentUser.value.userId) === Number(comment.userId)
+}
+
 const getRankClass = (rank) => {
   if (rank === 1) return 'rank-gold'
   if (rank === 2) return 'rank-silver'
@@ -260,755 +406,469 @@ const getRankClass = (rank) => {
   return 'rank-normal'
 }
 
-// 计算百分比
 const calculatePercentage = (score, totalScore) => {
   if (!score || !totalScore) return 0
   return ((score / totalScore) * 100).toFixed(1)
 }
 
-// 格式化日期时间
 const formatDateTime = (dateTime) => {
   if (!dateTime) return '-'
   return new Date(dateTime).toLocaleString('zh-CN')
 }
 
-onMounted(() => {
-  getPaperList()
-  loadRanking()
+onMounted(async () => {
+  await getPaperList()
+  await Promise.all([loadRanking(), loadComments()])
 })
 </script>
 
 <style scoped>
-/* 全局背景 */
-html, body {
-  margin: 0;
-  padding: 0;
-  min-height: 100vh;
+/* =========================================
+   全局美学变量 (顶级毛玻璃与通透感)
+========================================= */
+:root {
+  --glass-bg: rgba(255, 255, 255, 0.6);
+  --glass-bg-light: rgba(255, 255, 255, 0.4);
+  --glass-border: rgba(255, 255, 255, 0.7);
+  --glass-shadow: 0 16px 40px rgba(31, 38, 135, 0.08);
+  --glass-shadow-hover: 0 24px 56px rgba(31, 38, 135, 0.16);
+  --primary-color: #409eff;
+  --text-main: #0f172a;
+  --text-sub: #64748b;
+  --hover-transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1); /* 顶级丝滑缓动 */
+  --border-radius-card: 32px; /* 极致弧形 */
+  --border-radius-element: 20px;
 }
 
+/* =========================================
+   页面主容器与动态流体环境光晕 (Ambient Orbs)
+========================================= */
 .exam-ranking-page {
-  padding: 20px;
-  max-width: 1200px;
+  padding: 40px 32px;
+  max-width: 1320px;
   margin: 0 auto;
-  background: linear-gradient(135deg, #a8b5ff 0%, #b8c5ff 100%);
   min-height: 100vh;
   position: relative;
+  z-index: 1;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color: var(--text-main);
+  overflow-x: hidden;
 }
 
-/* 添加全屏背景 */
+/* 动态迷幻背景层 */
 .exam-ranking-page::before {
   content: '';
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, #a8b5ff 0%, #b8c5ff 100%);
+  inset: -20%;
   z-index: -1;
+  background: 
+    radial-gradient(circle at 10% 20%, rgba(255, 215, 0, 0.12), transparent 45%),
+    radial-gradient(circle at 90% 10%, rgba(139, 92, 246, 0.15), transparent 45%),
+    radial-gradient(circle at 50% 80%, rgba(59, 130, 246, 0.15), transparent 50%),
+    linear-gradient(135deg, #f3f6fc 0%, #e8f0fe 100%);
+  background-size: 200% 200%;
+  animation: ambientShift 25s cubic-bezier(0.4, 0, 0.2, 1) infinite alternate;
+  filter: blur(30px);
 }
 
-/* 页面标题重新设计 */
+@keyframes ambientShift {
+  0% { transform: rotate(0deg) scale(1); background-position: 0% 50%; }
+  50% { transform: rotate(2deg) scale(1.05); background-position: 100% 50%; }
+  100% { transform: rotate(-2deg) scale(0.95); background-position: 50% 100%; }
+}
+
+/* =========================================
+   页头与荣耀动效
+========================================= */
 .page-header {
   text-align: center;
-  margin-bottom: 40px;
+  margin-bottom: 56px;
   position: relative;
+  animation: fadeDown 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@keyframes fadeDown {
+  from { opacity: 0; transform: translateY(-30px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .header-decoration {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 20px;
+  gap: 28px;
   margin-bottom: 20px;
 }
 
 .trophy-animation {
-  font-size: 48px;
-  animation: bounce 2s ease-in-out infinite;
+  font-size: 64px;
+  animation: floatTrophy 4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  filter: drop-shadow(0 12px 24px rgba(255, 215, 0, 0.4));
+}
+@keyframes floatTrophy {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-16px) scale(1.08); }
 }
 
-.stars {
-  display: flex;
-  gap: 10px;
-}
-
+.stars { display: flex; gap: 12px; }
 .star {
-  font-size: 24px;
-  animation: twinkle 1.5s ease-in-out infinite;
+  font-size: 32px;
+  animation: twinkle 3s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  filter: drop-shadow(0 4px 12px rgba(255, 215, 0, 0.5));
+}
+.star:nth-child(2) { animation-delay: 0.8s; font-size: 42px; margin-top: -16px; }
+.star:nth-child(3) { animation-delay: 1.6s; }
+@keyframes twinkle {
+  0%, 100% { opacity: 0.5; transform: scale(0.85) rotate(0deg); filter: hue-rotate(0deg); }
+  50% { opacity: 1; transform: scale(1.2) rotate(15deg); filter: hue-rotate(20deg); }
 }
 
-.star:nth-child(2) {
-  animation-delay: 0.5s;
-}
-
-.star:nth-child(3) {
-  animation-delay: 1s;
-}
-
+/* 流光文字渐变 */
 .main-title {
-  font-size: 36px;
-  color: white;
-  margin: 0 0 15px;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-  font-weight: 700;
+  font-size: 46px;
+  margin: 0 0 16px;
+  font-weight: 900;
+  background: linear-gradient(135deg, #f59e0b 0%, #ef4444 50%, #8b5cf6 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: textShine 5s linear infinite;
+  letter-spacing: 3px;
+  filter: drop-shadow(0 4px 16px rgba(245, 158, 11, 0.2));
 }
+@keyframes textShine { to { background-position: 200% center; } }
 
 .subtitle {
-  color: rgba(255, 255, 255, 0.9);
-  margin: 0 0 20px;
-  font-size: 18px;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  color: var(--text-sub);
+  margin: 0 0 28px;
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: 1px;
 }
 
 .title-underline {
   width: 100px;
-  height: 4px;
-  background: linear-gradient(90deg, #ff6b6b, #ffa500, #48bb78);
+  height: 8px;
+  background: linear-gradient(90deg, #ff6b6b, #f59e0b, #48bb78);
   margin: 0 auto;
-  border-radius: 2px;
-  animation: rainbow 3s ease-in-out infinite;
+  border-radius: 8px;
+  animation: rainbowWidth 4s cubic-bezier(0.25, 0.8, 0.25, 1) infinite alternate;
+}
+@keyframes rainbowWidth {
+  from { width: 80px; filter: hue-rotate(0deg); }
+  to { width: 160px; filter: hue-rotate(60deg); }
 }
 
-/* 筛选条件美化 */
+/* =========================================
+   操作栏 (高级毛玻璃悬浮舱)
+========================================= */
 .filter-bar {
   display: flex;
-  gap: 20px;
-  margin-bottom: 30px;
+  gap: 28px;
+  margin-bottom: 48px;
   justify-content: center;
   align-items: center;
-  background: rgba(255, 255, 255, 0.15);
-  padding: 20px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(32px);
+  -webkit-backdrop-filter: blur(32px);
+  padding: 28px 40px;
+  border-radius: var(--border-radius-card);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
+  transition: var(--hover-transition);
+}
+.filter-bar:hover {
+  transform: translateY(-2px) scale(1.005);
+  box-shadow: var(--glass-shadow-hover);
+}
+
+.filter-label { color: var(--text-main); font-weight: 800; font-size: 18px; }
+
+/* Element Plus 覆盖 */
+:deep(.custom-select .el-input__wrapper) {
   border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.02), 0 2px 8px rgba(0,0,0,0.04);
+  background: rgba(255, 255, 255, 0.85);
+  transition: var(--hover-transition);
+  padding: 8px 16px;
 }
-
-.filter-label {
-  color: white;
-  font-weight: 600;
-  font-size: 16px;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-}
-
-.custom-select {
-  border-radius: 12px;
+:deep(.custom-select .el-input__wrapper:hover), 
+:deep(.custom-select .el-input__wrapper.is-focus) {
+  box-shadow: 0 4px 16px rgba(64,158,255,0.2);
+  background: #ffffff;
 }
 
 .refresh-btn {
-  border-radius: 12px !important;
-  font-weight: 600 !important;
-  padding: 12px 24px !important;
-  background: linear-gradient(135deg, #ff6b6b, #ffa500) !important;
+  border-radius: 16px !important;
+  font-weight: 800 !important;
+  padding: 22px 32px !important;
+  font-size: 16px !important;
+  background: linear-gradient(135deg, #ff6b6b, #f59e0b) !important;
   border: none !important;
-  box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3) !important;
-  transition: all 0.3s ease !important;
+  box-shadow: 0 8px 20px rgba(245, 158, 11, 0.3) !important;
+  transition: var(--hover-transition) !important;
 }
-
 .refresh-btn:hover {
-  transform: translateY(-2px) !important;
-  box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4) !important;
+  transform: translateY(-4px) scale(1.02) !important;
+  box-shadow: 0 12px 28px rgba(245, 158, 11, 0.4) !important;
 }
 
-/* 冠军展示区 */
-.champion-showcase {
-  background: linear-gradient(135deg, #ffd700, #ffed4e);
-  padding: 30px;
-  border-radius: 20px;
-  text-align: center;
-  margin-bottom: 30px;
-  position: relative;
-  overflow: hidden;
-  box-shadow: 0 8px 32px rgba(255, 215, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-}
-
-.champion-showcase::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  animation: sweep 3s ease-in-out infinite;
-}
-
-.champion-crown {
-  font-size: 48px;
-  margin-bottom: 15px;
-  animation: crownFloat 2s ease-in-out infinite;
-}
-
-.champion-name {
-  font-size: 28px;
-  font-weight: 800;
-  color: #b8860b;
-  margin-bottom: 10px;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-.champion-score {
-  font-size: 36px;
-  font-weight: 900;
-  color: #8b6914;
-  margin-bottom: 10px;
-}
-
-.champion-title {
-  font-size: 16px;
-  color: #8b6914;
-  font-weight: 600;
-}
-
-/* 主内容区域 */
+/* =========================================
+   主体内容区布局
+========================================= */
 .main-content {
   display: flex;
-  gap: 30px;
+  gap: 40px;
   align-items: flex-start;
+  animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both;
+}
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(40px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-.ranking-container {
-  flex: 2;
-  margin-bottom: 0;
-}
+.ranking-container { flex: 2; margin-bottom: 0; }
 
-.loading-container {
+/* =========================================
+   冠军专属展示卡片 (奢华质感)
+========================================= */
+.champion-showcase {
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.2) 0%, rgba(255, 140, 0, 0.05) 100%);
+  backdrop-filter: blur(32px);
+  border: 1px solid rgba(255, 215, 0, 0.5);
   padding: 40px;
+  border-radius: var(--border-radius-card);
   text-align: center;
+  margin-bottom: 40px;
+  box-shadow: 0 16px 40px rgba(218, 165, 32, 0.2);
+  position: relative;
+  overflow: hidden;
+  transition: var(--hover-transition);
+}
+.champion-showcase:hover {
+  transform: translateY(-6px) scale(1.01);
+  box-shadow: 0 24px 56px rgba(218, 165, 32, 0.3);
+}
+.champion-showcase::after {
+  content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+  background: linear-gradient(to right, transparent, rgba(255,255,255,0.5), transparent);
+  transform: rotate(45deg);
+  animation: shineGlass 5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+@keyframes shineGlass {
+  0% { left: -100%; top: -100%; }
+  20%, 100% { left: 100%; top: 100%; }
 }
 
-.ranking-list {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
+.champion-crown { font-size: 72px; margin-bottom: 20px; filter: drop-shadow(0 8px 16px rgba(255,215,0,0.6)); animation: floatTrophy 4s infinite;}
+.champion-name { font-size: 36px; font-weight: 900; color: #b8860b; margin-bottom: 10px; letter-spacing: 2px; text-shadow: 0 2px 8px rgba(255,215,0,0.3);}
+.champion-score { font-size: 48px; font-weight: 900; color: #d97706; margin-bottom: 16px; font-family: "SF Pro Display", sans-serif; filter: drop-shadow(0 4px 8px rgba(217, 119, 6, 0.2));}
+.champion-title { font-size: 18px; color: #92400e; font-weight: 800; background: linear-gradient(90deg, rgba(255,215,0,0.1), rgba(255,215,0,0.3), rgba(255,215,0,0.1)); display: inline-block; padding: 8px 24px; border-radius: 24px; }
+
+/* =========================================
+   排行榜列表项 (流体动画悬浮卡)
+========================================= */
+.ranking-list { display: flex; flex-direction: column; gap: 20px; }
 
 .ranking-item {
   display: flex;
   align-items: center;
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 16px;
-  padding: 20px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-}
-
-.ranking-item:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-  background: rgba(255, 255, 255, 0.95);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-}
-
-/* 前三名特殊样式保持不变，但调整文字颜色 */
-.ranking-item.top-three {
-  color: white;
-  border: 2px solid transparent;
+  background: var(--glass-bg);
+  backdrop-filter: blur(24px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--border-radius-element);
+  padding: 24px 32px;
+  box-shadow: 0 8px 24px rgba(31,38,135,0.05);
+  transition: var(--hover-transition);
   position: relative;
   overflow: hidden;
-  font-weight: 500;
 }
-
-/* 第一名 - 优雅橙红色 */
-.ranking-item.top-three:nth-child(1) {
-  background: linear-gradient(135deg, #ff6b6b 0%, #ffa500 50%, #ff8c42 100%);
-  border-color: #ff6b6b;
-  box-shadow: 0 6px 25px rgba(255, 107, 107, 0.4);
+.ranking-item::before {
+  content: ''; position: absolute; left: 0; top: 0; height: 100%; width: 6px;
+  background: transparent; transition: var(--hover-transition);
 }
-
-.ranking-item.top-three:nth-child(1)::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, #ff4757, #ff6b6b, #ff4757);
-  animation: firstShine 2s ease-in-out infinite;
+.ranking-item:hover {
+  transform: translateX(10px) scale(1.02);
+  box-shadow: 0 16px 40px rgba(31,38,135,0.1);
+  background: rgba(255,255,255,0.9);
 }
+.ranking-item:hover::before { background: var(--primary-color); }
 
-/* 第二名 - 现代蓝紫色 */
-.ranking-item.top-three:nth-child(2) {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #5a67d8 100%);
-  border-color: #667eea;
-  box-shadow: 0 6px 25px rgba(102, 126, 234, 0.4);
-}
-
-.ranking-item.top-three:nth-child(2)::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, #4c63d2, #667eea, #4c63d2);
-  animation: secondShine 2.5s ease-in-out infinite;
-}
-
-/* 第三名 - 温暖绿色 */
-.ranking-item.top-three:nth-child(3) {
-  background: linear-gradient(135deg, #48bb78 0%, #38a169 50%, #2f855a 100%);
-  border-color: #48bb78;
-  box-shadow: 0 6px 25px rgba(72, 187, 120, 0.4);
-}
-
-.ranking-item.top-three:nth-child(3)::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, #38a169, #48bb78, #38a169);
-  animation: thirdShine 3s ease-in-out infinite;
-}
-
-/* 前三名悬停效果增强 */
-.ranking-item.top-three:hover {
-  transform: translateY(-4px) scale(1.01);
-  z-index: 10;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
-}
-
+/* 排名徽章圆润化 */
 .rank-number {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-  font-weight: bold;
-  margin-right: 20px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  transition: all 0.3s ease;
+  width: 72px; height: 72px; border-radius: 50%; /* 圆形徽章 */
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px; font-weight: 900; margin-right: 28px;
+  box-shadow: inset 0 2px 6px rgba(255,255,255,0.6), 0 8px 16px rgba(0,0,0,0.1);
+  font-family: "SF Pro Display", sans-serif;
+  transition: var(--hover-transition);
 }
+.ranking-item:hover .rank-number { transform: rotate(-10deg) scale(1.1); }
 
-.ranking-item:hover .rank-number {
-  transform: scale(1.1);
-}
+.rank-gold { background: linear-gradient(135deg, #ffe066 0%, #f59e0b 100%); color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+.rank-silver { background: linear-gradient(135deg, #f1f5f9 0%, #94a3b8 100%); color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+.rank-bronze { background: linear-gradient(135deg, #fde68a 0%, #d97706 100%); color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+.rank-normal { background: rgba(255, 255, 255, 0.5); color: var(--text-sub); border: 2px solid rgba(15,23,42,0.05); box-shadow: none;}
 
-.rank-gold {
-  background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
-  color: #8b6914;
-  border: 3px solid #ffed4e;
-  box-shadow: 0 4px 20px rgba(255, 215, 0, 0.5);
-}
+.student-info { flex: 1; }
+.student-name { font-size: 22px; font-weight: 800; margin-bottom: 8px; color: var(--text-main); }
+.paper-name { font-size: 15px; color: var(--text-sub); margin-bottom: 6px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.exam-time { font-size: 14px; color: #94a3b8; font-weight: 600; }
 
-.rank-silver {
-  background: linear-gradient(135deg, #c0c0c0 0%, #e5e5e5 100%);
-  color: #666;
-  border: 3px solid #e5e5e5;
-  box-shadow: 0 4px 20px rgba(192, 192, 192, 0.5);
-}
-
-.rank-bronze {
-  background: linear-gradient(135deg, #cd7f32 0%, #daa520 100%);
-  color: white;
-  border: 3px solid #daa520;
-  box-shadow: 0 4px 20px rgba(205, 127, 50, 0.5);
-}
-
-.rank-normal {
-  background: #667eea;
-  color: white;
-  border: 2px solid #5a67d8;
-}
-
-.student-info {
-  flex: 1;
-}
-
-.student-name {
-  font-size: 18px;
-  font-weight: 700;
-  margin-bottom: 5px;
-  color: #2d3748;
-}
-
-.paper-name {
-  font-size: 14px;
-  color: #4a5568;
-  margin-bottom: 3px;
-  font-weight: 500;
-}
-
-.exam-time {
-  font-size: 12px;
-  color: #718096;
-  font-weight: 500;
-}
-
-.score-info {
-  text-align: right;
-  margin-left: 20px;
-}
-
-.score {
-  font-size: 24px;
-  font-weight: bold;
-  color: #667eea;
-}
-
-.total-score {
-  font-size: 14px;
-  color: #4a5568;
-  font-weight: 600;
-}
-
+.score-info { text-align: right; margin-left: 24px; display: flex; flex-direction: column; align-items: flex-end;}
+.score { font-size: 36px; font-weight: 900; color: var(--primary-color); font-family: "SF Pro Display", sans-serif; line-height: 1; filter: drop-shadow(0 2px 4px rgba(64,158,255,0.2));}
+.total-score { font-size: 15px; color: var(--text-sub); font-weight: 800; margin-top: 6px; }
 .percentage {
-  font-size: 12px;
-  color: #48bb78;
-  margin-top: 5px;
-  font-weight: 600;
+  font-size: 14px; color: #10b981; margin-top: 8px; font-weight: 800;
+  background: rgba(16, 185, 129, 0.15); padding: 4px 12px; border-radius: 12px;
 }
 
-/* 前三名文字样式统一 */
-.top-three .score {
-  color: white;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-  font-weight: 700;
-}
-
-.top-three .total-score {
-  color: rgba(255, 255, 255, 0.9);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-}
-
-.top-three .percentage {
-  color: rgba(255, 255, 255, 0.95);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-  font-weight: 600;
-}
-
-.top-three .student-name {
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-  font-weight: 600;
-  color: white;
-}
-
-.top-three .paper-name {
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-  color: rgba(255, 255, 255, 0.9);
-}
-
-.top-three .exam-time {
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-  color: rgba(255, 255, 255, 0.8);
-}
-
-/* 前三名排名圆圈重新设计 */
-.ranking-item.top-three:nth-child(1) .rank-number {
-  background: rgba(255, 255, 255, 0.95);
-  color: #e53e3e;
-  border: 3px solid rgba(255, 255, 255, 0.8);
-  font-weight: 900;
-  font-size: 22px;
-  text-shadow: none;
-}
-
-.ranking-item.top-three:nth-child(2) .rank-number {
-  background: rgba(255, 255, 255, 0.95);
-  color: #4c63d2;
-  border: 3px solid rgba(255, 255, 255, 0.8);
-  font-weight: 800;
-  font-size: 22px;
-  text-shadow: none;
-}
-
-.ranking-item.top-three:nth-child(3) .rank-number {
-  background: rgba(255, 255, 255, 0.95);
-  color: #2f855a;
-  border: 3px solid rgba(255, 255, 255, 0.8);
-  font-weight: 800;
-  font-size: 22px;
-  text-shadow: none;
-}
-
-/* 统计侧边栏 */
+/* =========================================
+   统计侧边栏 (粘性悬浮布局)
+========================================= */
 .statistics-sidebar {
   flex: 1;
-  max-width: 300px;
-  min-width: 280px;
-  padding: 20px;
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 16px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-  height: fit-content;
+  max-width: 340px;
+  min-width: 300px;
+  padding: 32px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(32px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--border-radius-card);
+  box-shadow: var(--glass-shadow);
   position: sticky;
-  top: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  top: 120px;
+  transition: var(--hover-transition);
 }
+.statistics-sidebar:hover { transform: translateY(-4px); box-shadow: var(--glass-shadow-hover); }
 
 .stats-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #2d3748;
-  margin-bottom: 15px;
-  padding-bottom: 8px;
-  border-bottom: 2px solid #e1ecf4;
+  font-size: 20px; font-weight: 900; color: var(--text-main);
+  margin-bottom: 32px; padding-bottom: 20px;
+  border-bottom: 2px dashed rgba(15,23,42,0.1);
   text-align: center;
-  word-break: break-all;
-  line-height: 1.4;
 }
 
-.stats-vertical {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
+.stats-vertical { display: flex; flex-direction: column; gap: 20px; }
 .stat-card-vertical {
-  flex: 1;
-  text-align: center;
-  padding: 20px;
-  background: rgba(248, 249, 255, 0.8);
-  color: #333;
-  border-radius: 12px;
-  border: 1px solid #e1ecf4;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s ease;
+  display: flex; align-items: center; padding: 24px; gap: 20px;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 24px; border: 1px solid rgba(255,255,255,0.9);
+  transition: var(--hover-transition);
+}
+.stat-card-vertical:hover { 
+  transform: translateX(8px); 
+  background: rgba(255, 255, 255, 0.95); 
+  box-shadow: 0 12px 32px rgba(0,0,0,0.06); 
+}
+.stat-icon { 
+  font-size: 40px; width: 64px; height: 64px; display: flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,0.8); border-radius: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  transition: var(--hover-transition);
+}
+.stat-card-vertical:hover .stat-icon { transform: scale(1.1) rotate(5deg); }
+.stat-info { flex: 1; }
+.stat-value { font-size: 32px; font-weight: 900; color: var(--primary-color); margin-bottom: 4px; font-family: "SF Pro Display", sans-serif; }
+.stat-label { font-size: 15px; color: var(--text-sub); font-weight: 800; }
+
+/* =========================================
+   评论区 (深度弧形与柔和面板)
+========================================= */
+.comment-section { margin-top: 64px; display: flex; flex-direction: column; gap: 32px; animation: fadeInUp 0.8s 0.3s both; }
+
+.comment-header {
+  display: flex; justify-content: space-between; align-items: center;
+  background: var(--glass-bg-light); backdrop-filter: blur(24px);
+  padding: 32px 40px; border-radius: var(--border-radius-card);
+  border: 1px solid var(--glass-border); box-shadow: var(--glass-shadow);
+}
+.comment-title { font-size: 26px; font-weight: 900; color: var(--text-main); }
+.comment-subtitle, .comment-count { color: var(--text-sub); font-size: 16px; margin-top: 10px; font-weight: 700; }
+.comment-count { background: rgba(64,158,255,0.1); color: var(--primary-color); padding: 8px 20px; border-radius: 20px; }
+
+.comment-form-card, .comment-list-card {
+  background: var(--glass-bg); backdrop-filter: blur(32px);
+  border-radius: var(--border-radius-card); padding: 40px;
+  border: 1px solid var(--glass-border); box-shadow: var(--glass-shadow);
+  transition: var(--hover-transition);
+}
+.comment-form-card:hover, .comment-list-card:hover { box-shadow: var(--glass-shadow-hover); }
+
+.login-tip { display: flex; justify-content: space-between; align-items: center; color: var(--text-main); font-weight: 700; font-size: 16px; background: rgba(64,158,255,0.08); padding: 24px 32px; border-radius: 24px; }
+.current-user { color: var(--text-sub); font-weight: 800; margin-bottom: 20px; font-size: 16px;}
+
+:deep(.el-textarea__inner) {
+  border-radius: 20px; background: rgba(255, 255, 255, 0.8);
+  box-shadow: inset 0 2px 8px rgba(0,0,0,0.03); transition: var(--hover-transition);
+  padding: 20px; font-size: 16px; line-height: 1.6;
+}
+:deep(.el-textarea__inner:focus) { background: #fff; box-shadow: 0 0 0 3px rgba(64,158,255,0.2); }
+
+.comment-form-actions { margin-top: 24px; display: flex; justify-content: space-between; align-items: center; }
+.comment-hint { color: #94a3b8; font-size: 14px; font-weight: 600;}
+
+.comment-list { display: flex; flex-direction: column; gap: 24px; }
+.comment-item {
+  display: flex; gap: 24px; padding: 32px; border-radius: 24px;
+  background: rgba(255, 255, 255, 0.6); border: 1px solid rgba(255,255,255,0.9);
+  transition: var(--hover-transition);
+}
+.comment-item:hover { background: rgba(255,255,255,0.95); box-shadow: 0 12px 32px rgba(0,0,0,0.05); transform: translateY(-4px); }
+
+.comment-avatar {
+  width: 56px; height: 56px; border-radius: 20px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white; font-weight: 900; font-size: 24px; box-shadow: 0 8px 16px rgba(118, 75, 162, 0.3);
 }
 
-.stat-card-vertical:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
-  background: rgba(240, 246, 255, 0.9);
-}
+.comment-body { flex: 1; }
+.comment-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.comment-author { color: var(--text-main); font-weight: 900; font-size: 18px;}
+.comment-time { color: #94a3b8; font-size: 14px; font-weight: 700;}
+.comment-content { color: var(--text-sub); line-height: 1.9; font-size: 16px; font-weight: 600;}
 
-.stat-icon {
-  font-size: 28px;
-  margin-bottom: 12px;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
-}
+/* =========================================
+   空状态与底部激励语
+========================================= */
+.empty-state { text-align: center; padding: 100px 20px; background: rgba(255, 255, 255, 0.6); border-radius: var(--border-radius-card); border: 1px dashed rgba(15,23,42,0.1); }
+.empty-icon { font-size: 80px; margin-bottom: 32px; animation: floatTrophy 4s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+.empty-text { font-size: 26px; color: var(--text-main); margin-bottom: 16px; font-weight: 900; }
+.empty-hint { font-size: 16px; color: var(--text-sub); font-weight: 700; }
 
-.stat-info {
-  text-align: center;
-}
+.motivation-section { margin-top: 80px; text-align: center; background: var(--glass-bg-light); backdrop-filter: blur(24px); padding: 56px; border-radius: var(--border-radius-card); border: 1px solid var(--glass-border); box-shadow: var(--glass-shadow); transition: var(--hover-transition); }
+.motivation-section:hover { transform: scale(1.02); }
+.motivation-text { font-size: 24px; color: var(--text-main); margin-bottom: 32px; font-weight: 900; letter-spacing: 1px; }
+.floating-emojis { display: flex; justify-content: center; gap: 48px; }
+.emoji { font-size: 48px; animation: bounce 3s cubic-bezier(0.28, 0.84, 0.42, 1) infinite; filter: drop-shadow(0 8px 16px rgba(0,0,0,0.15)); }
+.emoji:nth-child(2) { animation-delay: 0.6s; } .emoji:nth-child(3) { animation-delay: 1.2s; } .emoji:nth-child(4) { animation-delay: 1.8s; }
 
-.stat-value {
-  font-size: 24px;
-  font-weight: bold;
-  color: #667eea;
-  margin-bottom: 6px;
-  text-shadow: none;
-}
-
-.stat-label {
-  font-size: 13px;
-  color: #4a5568;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-/* 空状态 */
-.empty-state {
-  text-align: center;
-  padding: 60px 20px;
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-}
-
-.empty-icon {
-  font-size: 64px;
-  margin-bottom: 20px;
-  animation: float 3s ease-in-out infinite;
-}
-
-.empty-text {
-  font-size: 20px;
-  color: #4a5568;
-  margin-bottom: 10px;
-  font-weight: 600;
-}
-
-.empty-hint {
-  font-size: 14px;
-  color: #718096;
-  font-weight: 500;
-}
-
-/* 底部激励区域 */
-.motivation-section {
-  margin-top: 40px;
-  text-align: center;
-  background: rgba(255, 255, 255, 0.15);
-  padding: 30px;
-  border-radius: 20px;
-  position: relative;
-  overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.motivation-text {
-  font-size: 18px;
-  color: white;
-  margin-bottom: 20px;
-  font-weight: 600;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-}
-
-.floating-emojis {
-  display: flex;
-  justify-content: center;
-  gap: 30px;
-}
-
-.emoji {
-  font-size: 32px;
-  animation: float 2s ease-in-out infinite;
-}
-
-.emoji:nth-child(1) { animation-delay: 0s; }
-.emoji:nth-child(2) { animation-delay: 0.5s; }
-.emoji:nth-child(3) { animation-delay: 1s; }
-.emoji:nth-child(4) { animation-delay: 1.5s; }
-
-/* 动画效果 */
 @keyframes bounce {
-  0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
-  40% { transform: translateY(-30px); }
-  60% { transform: translateY(-15px); }
+  0%, 20%, 50%, 80%, 100% { transform: translateY(0) scale(1); }
+  40% { transform: translateY(-32px) scale(1.1); }
+  60% { transform: translateY(-16px) scale(1.05); }
 }
 
-@keyframes twinkle {
-  0%, 100% { opacity: 0.5; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.2); }
+/* =========================================
+   响应式断点适配
+========================================= */
+@media (max-width: 1024px) {
+  .main-content { flex-direction: column; }
+  .statistics-sidebar { position: static; max-width: none; min-width: auto; margin-top: 32px; }
+  .stats-vertical { flex-direction: row; flex-wrap: wrap; }
+  .stat-card-vertical { flex: 1 1 calc(50% - 20px); flex-direction: column; text-align: center; }
+  .stat-card-vertical:hover { transform: translateY(-8px); }
 }
-
-@keyframes rainbow {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
-@keyframes sweep {
-  0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
-  100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
-}
-
-@keyframes crownFloat {
-  0%, 100% { transform: translateY(0) rotate(-3deg); }
-  50% { transform: translateY(-10px) rotate(3deg); }
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-20px); }
-}
-
-@keyframes firstShine {
-  0%, 100% { opacity: 0.8; }
-  50% { opacity: 1; }
-}
-
-@keyframes secondShine {
-  0%, 100% { opacity: 0.7; }
-  50% { opacity: 1; }
-}
-
-@keyframes thirdShine {
-  0%, 100% { opacity: 0.6; }
-  50% { opacity: 0.9; }
-}
-
-/* 响应式设计 */
 @media (max-width: 768px) {
-  .exam-ranking-page {
-    padding: 15px;
-  }
-  
-  .main-title {
-    font-size: 28px;
-  }
-  
-  .subtitle {
-    font-size: 16px;
-  }
-  
-  .filter-bar {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
-  }
-  
-  .main-content {
-    flex-direction: column;
-    gap: 20px;
-  }
-  
-  .ranking-container {
-    flex: none;
-  }
-  
-  .statistics-sidebar {
-    position: static;
-    max-width: none;
-    min-width: auto;
-    margin-top: 20px;
-  }
-  
-  .champion-showcase {
-    padding: 20px;
-  }
-  
-  .champion-name {
-    font-size: 24px;
-  }
-  
-  .champion-score {
-    font-size: 28px;
-  }
-  
-  .stats-vertical {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 15px;
-  }
-  
-  .stat-card-vertical {
-    padding: 15px;
-  }
-  
-  .stat-value {
-    font-size: 20px;
-  }
-  
-  .stat-icon {
-    font-size: 24px;
-    margin-bottom: 8px;
-  }
-  
-  .ranking-item {
-    flex-direction: column;
-    text-align: center;
-    gap: 15px;
-    padding: 15px;
-  }
-  
-  .rank-number {
-    margin-right: 0;
-    width: 50px;
-    height: 50px;
-    font-size: 18px;
-  }
-  
-  .score-info {
-    margin-left: 0;
-  }
-  
-  .score {
-    font-size: 20px;
-  }
-  
-  .floating-emojis {
-    gap: 20px;
-  }
-  
-  .emoji {
-    font-size: 24px;
-  }
+  .exam-ranking-page { padding: 24px 16px; }
+  .filter-bar { flex-direction: column; align-items: stretch; padding: 32px 24px; }
+  .ranking-item { flex-direction: column; text-align: center; gap: 16px; }
+  .rank-number { margin: 0 auto; }
+  .score-info { margin: 0; align-items: center; }
+  .comment-header, .login-tip { flex-direction: column; align-items: flex-start; gap: 20px; }
+  .comment-item { flex-direction: column; align-items: center; text-align: center; }
+  .comment-meta { flex-direction: column; gap: 8px; }
+  .stats-vertical { flex-direction: column; }
+  .stat-card-vertical { flex: 1 1 100%; }
 }
-</style> 
+</style>

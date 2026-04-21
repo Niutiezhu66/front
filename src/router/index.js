@@ -76,6 +76,12 @@ const routes = [
         meta: { title: '成绩管理' }
       },
       {
+        path: 'teacher-analysis',
+        name: 'TeacherAnalysis',
+        component: () => import('../views/TeacherAnalysis.vue'),
+        meta: { title: '教学分析与改进', role: ['1', '0'] } // 允许老师(1)和管理员(0)访问
+      },
+      {
         path: 'system-users', //
         name: 'SystemUsers',
         component: () => import('../views/SystemUserManage.vue'),
